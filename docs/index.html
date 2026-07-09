@@ -29,9 +29,13 @@
   .search:focus{outline:2px solid var(--sig);outline-offset:1px}
   .count{font-family:var(--mono);font-size:12px;color:var(--faint);white-space:nowrap}
   .updated{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:8px}
-  .feed{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start;margin-top:16px}
+  .feed{display:grid;grid-template-columns:repeat(3,1fr);gap:0;align-items:stretch;margin-top:16px}
   .feed.one{grid-template-columns:1fr}
-  .col{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .col{display:flex;flex-direction:column;gap:12px;min-width:0;padding:0 30px}
+  .col:first-child{padding-left:0}
+  .col:last-child{padding-right:0}
+  .col + .col{border-left:1px solid var(--line-strong)}
+  .feed.one .col{padding:0;border-left:none}
   .col .group-h{margin:0}
   .colempty{font-family:var(--mono);font-size:12px;color:var(--faint);padding:12px;border:1px dashed var(--line);border-radius:8px;text-align:center}
   .group-h{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:16px 0 2px;display:flex;align-items:center;gap:8px}
@@ -56,8 +60,7 @@
   .foot{display:flex;gap:14px;font-family:var(--mono);font-size:11.5px;align-items:center;flex-wrap:wrap;padding-top:9px;border-top:1px solid var(--line)}
   .foot a{color:var(--sig);text-decoration:none}.foot a:hover{text-decoration:underline}.foot .date{color:var(--faint);margin-left:auto}
   .empty{text-align:center;color:var(--faint);font-family:var(--mono);font-size:13px;padding:40px;border:1px dashed var(--line-strong);border-radius:10px}
-  @media (max-width:900px){.feed{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:640px){.feed{grid-template-columns:1fr}}
+  @media (max-width:900px){.feed{grid-template-columns:1fr}.col{padding:0}.col + .col{border-left:none}}
   @media (max-width:680px){.stats{grid-template-columns:repeat(2,1fr)}.controls{position:static}}
 </style>
 </head>
