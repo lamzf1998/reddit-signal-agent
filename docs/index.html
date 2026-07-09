@@ -62,9 +62,26 @@
   .empty{text-align:center;color:var(--faint);font-family:var(--mono);font-size:13px;padding:40px;border:1px dashed var(--line-strong);border-radius:10px}
   @media (max-width:900px){.feed{grid-template-columns:1fr}.col{padding:0}.col + .col{border-left:none}}
   @media (max-width:680px){.stats{grid-template-columns:repeat(2,1fr)}.controls{position:static}}
+  /* the little guy doing laps around your dashboard */
+  .runner{position:fixed;top:0;left:0;z-index:9999;pointer-events:none;animation:lap 15s linear infinite}
+  .runner span{display:inline-block;font-size:32px;animation:bob .38s ease-in-out infinite;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-5px) rotate(8deg)}}
+  @keyframes lap{
+    0%{transform:translate(8px,8px) scaleX(-1)}
+    24%{transform:translate(calc(100vw - 50px),8px) scaleX(-1)}
+    26%{transform:translate(calc(100vw - 50px),8px) scaleX(-1)}
+    49%{transform:translate(calc(100vw - 50px),calc(100vh - 54px)) scaleX(-1)}
+    51%{transform:translate(calc(100vw - 50px),calc(100vh - 54px)) scaleX(1)}
+    74%{transform:translate(8px,calc(100vh - 54px)) scaleX(1)}
+    76%{transform:translate(8px,calc(100vh - 54px)) scaleX(1)}
+    99%{transform:translate(8px,8px) scaleX(1)}
+    100%{transform:translate(8px,8px) scaleX(-1)}
+  }
+  @media (prefers-reduced-motion:reduce){.runner{display:none}}
 </style>
 </head>
 <body>
+<div class="runner"><span>🏃</span></div>
 <div class="wrap">
   <header>
     <div class="eyebrow">Static snapshot · GitHub Pages</div>
