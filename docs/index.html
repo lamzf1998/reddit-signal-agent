@@ -14,6 +14,12 @@
   .eyebrow::before{content:"";width:7px;height:7px;background:var(--sig);border-radius:50%;box-shadow:0 0 0 3px var(--sig-soft)}
   h1{font-family:var(--serif);font-weight:600;font-size:clamp(1.9rem,4.5vw,2.7rem);letter-spacing:-.015em;margin:12px 0 4px}
   .sub{color:var(--muted);margin:0}
+  .hrow{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}
+  .regime{margin:0;text-align:center;flex:none}
+  .regime img,.regime .fallback{width:78px;height:78px;border-radius:50%;object-fit:cover;border:2px solid var(--sig);box-shadow:var(--shadow);display:block}
+  .regime .fallback{display:none;align-items:center;justify-content:center;font-size:34px;background:var(--surface-2)}
+  .regime figcaption{font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--sig);margin-top:6px;font-weight:700;text-transform:uppercase}
+  @media (max-width:520px){.regime{display:none}}
   .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:22px}
   .stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
   .stat .n{font-family:var(--serif);font-size:1.6rem;line-height:1;font-variant-numeric:tabular-nums}
@@ -84,9 +90,18 @@
 <div class="runner"><span>🏃</span></div>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Static snapshot · GitHub Pages</div>
-    <h1>Reddit Signal Agent</h1>
-    <p class="sub">Every post the agent has analysed, newest first. Sent items are 🆕 NEW in Telegram.</p>
+    <div class="hrow">
+      <div>
+        <div class="eyebrow">Static snapshot · GitHub Pages</div>
+        <h1>Reddit Signal Agent</h1>
+        <p class="sub">Every post the agent has analysed, newest first. Sent items are 🆕 NEW in Telegram.</p>
+      </div>
+      <figure class="regime">
+        <img src="mbappe.jpg" alt="Reddit Dictator" onerror="this.style.display='none';this.parentElement.querySelector('.fallback').style.display='flex'">
+        <div class="fallback">👑⚽</div>
+        <figcaption>👑 Reddit Dictator</figcaption>
+      </figure>
+    </div>
     <div class="stats" id="stats"></div>
     <div class="updated" id="updated"></div>
   </header>
