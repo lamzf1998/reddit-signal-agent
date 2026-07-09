@@ -2,3 +2,4 @@
 Financial news and opinion about AI stocks and data-center / datacenter stocks (e.g. NVDA and other AI chip makers, AI capex, hyperscaler datacenter buildout)
 New image and video generation models and their prompts — especially Z Image Turbo and Seedance 2.0
 AI news about Claude Code, coding agents, and agentic frameworks / tooling
+i want to find football news, related to liverpool fc

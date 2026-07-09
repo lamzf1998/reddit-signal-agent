@@ -1,0 +1,51 @@
+{
+  "ai": {
+    "label": "🧠 AI — tools & news",
+    "color": "#4a4dd4",
+    "description": "AI tools, frameworks, and model releases, plus notable AI news/analysis about companies, models, agents, chips, and datacenters.",
+    "subreddits": [
+      "ArtificialInteligence",
+      "Artificial",
+      "OpenAI",
+      "Singularity",
+      "agi",
+      "technology",
+      "Futurology",
+      "automation",
+      "vibecoding"
+    ]
+  },
+  "content_gen": {
+    "label": "🎨 Content generation",
+    "color": "#c02f7d",
+    "description": "New image/video generation models, workflows, custom nodes, and prompt guides.",
+    "subreddits": [
+      "StableDiffusion",
+      "Midjourney",
+      "ConceptArt",
+      "DigitalArt",
+      "Illustration"
+    ]
+  },
+  "financial": {
+    "label": "📈 Financial",
+    "color": "#0b7a5a",
+    "description": "Posts about AI in the markets: AI stocks, AI capex and datacenter buildout, AI-driven market moves. Report attributed sentiment and opinion, never advice.",
+    "subreddits": [
+      "stocks",
+      "investing",
+      "wallstreetbets",
+      "StockMarket",
+      "NVDA_Stock"
+    ]
+  },
+  "sports_news": {
+    "label": "⚽ Sports news",
+    "color": "#b96a10",
+    "description": "Football / soccer news and discussion, especially Liverpool FC — transfers, match reactions, and club news.",
+    "subreddits": [
+      "liverpoolfc",
+      "soccer"
+    ]
+  }
+}

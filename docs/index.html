@@ -25,7 +25,7 @@
   .claw line{stroke:currentColor}
   @keyframes spin{to{transform:rotate(360deg)}}
   @media (prefers-reduced-motion:reduce){.claw{animation:none}}
-  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:22px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(116px,1fr));gap:12px;margin-top:22px}
   .stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
   .stat .n{font-family:var(--serif);font-size:1.6rem;line-height:1;font-variant-numeric:tabular-nums}
   .stat .l{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-top:6px}
@@ -53,12 +53,20 @@
   .cfg-sub{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
   .cfg-params{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
   .cfg-empty{font-size:13px;color:var(--faint);margin:0}
-  .watcher{position:fixed;right:18px;bottom:18px;z-index:9998;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:7px;transform:translateY(170%);transition:transform .6s cubic-bezier(.2,.9,.2,1)}
-  .watcher.left{right:auto;left:18px}
-  .watcher.show{transform:translateY(0)}
-  .watcher img{width:150px;height:auto;border-radius:10px;border:2px solid var(--sig);box-shadow:var(--shadow)}
-  .watcher span{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sig);background:var(--bg);padding:3px 9px;border-radius:6px;box-shadow:var(--shadow)}
-  @media (prefers-reduced-motion:reduce){.watcher{display:none}}
+  /* The ever-watching eye — permanent, bottom-right */
+  .dict-fab{position:fixed;right:22px;bottom:22px;z-index:1200;width:72px;height:72px;border-radius:50%;border:3px solid var(--sig);cursor:pointer;background:var(--bg);padding:0;box-shadow:var(--shadow);transition:transform .15s ease;animation:fabpulse 3.2s ease-in-out infinite}
+  .dict-fab img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+  .dict-fab:hover{transform:translateY(-2px) scale(1.06)}
+  .dict-fab-tag{position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;color:#fff;background:var(--sig);padding:2px 7px;border-radius:6px;box-shadow:var(--shadow);pointer-events:none}
+  @keyframes fabpulse{0%,100%{box-shadow:0 0 0 0 rgba(185,106,16,.5)}50%{box-shadow:0 0 0 8px rgba(185,106,16,0)}}
+  .dict-bubble{position:fixed;right:22px;bottom:104px;z-index:1200;max-width:260px;background:var(--surface);border:1px solid var(--line-strong);border-radius:13px;box-shadow:var(--shadow);padding:13px 15px;font-size:13px;color:var(--ink);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .18s ease,transform .18s ease}
+  .dict-bubble.show{opacity:1;transform:translateY(0)}
+  .dict-bubble b{color:var(--sig)}
+  .dict-bubble a{color:var(--sig)}
+  .chip .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .chip[aria-pressed="true"] .dot{box-shadow:0 0 0 1.5px #fff}
+  @media (prefers-color-scheme:dark){.dict-fab-tag{color:#14181d}}
+  @media (prefers-reduced-motion:reduce){.dict-fab{animation:none}}
   .feed{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;align-items:stretch;margin:16px -26px 0}
   .feed.one{grid-template-columns:1fr;margin-left:0;margin-right:0}
   .col{display:flex;flex-direction:column;gap:12px;min-width:0;padding:0 26px}
@@ -112,7 +120,11 @@
 </style>
 </head>
 <body>
-<div class="watcher" id="watcher"><img src="watching-you.png" alt="watching"><span>Watching, Always</span></div>
+<button class="dict-fab" id="dict-fab" title="The Dictator" aria-label="The Dictator">
+  <img src="watching-you.png" alt="The Dictator, watching">
+  <span class="dict-fab-tag">Watching, Always</span>
+</button>
+<div class="dict-bubble" id="dict-bubble">🫡 You seek to command <b>The Dictator</b>? Orders — new interests, new subreddits, running the extraction — are taken only at the <b>local command post</b>. This page is a read-only dispatch.</div>
 <div class="wrap">
   <header>
     <div class="hrow">
@@ -135,12 +147,7 @@
   </header>
   <details class="cfg"><summary>⚙ What Reddictator is watching · edit on the local dashboard</summary><div id="cfgbody"></div></details>
   <div class="controls">
-    <div class="chipgroup" id="trackchips">
-      <button class="chip" data-t="all" aria-pressed="true">All</button>
-      <button class="chip" data-t="ai" aria-pressed="false">AI</button>
-      <button class="chip" data-t="content_gen" aria-pressed="false">Content-gen</button>
-      <button class="chip" data-t="financial" aria-pressed="false">Financial</button>
-    </div>
+    <div class="chipgroup" id="trackchips"></div>
     <span class="vsep"></span>
     <div class="chipgroup" id="viewtabs">
       <button class="chip vt" data-v="sent" aria-pressed="true">Sent</button>
@@ -153,7 +160,8 @@
   <div class="feed" id="feed"></div>
 </div>
 <script>
-const TRACKS={ai:{label:"AI — tools & news",dot:"var(--ai)"},content_gen:{label:"Content generation",dot:"var(--gen)"},financial:{label:"Financial",dot:"var(--fin)"}};
+let TRACKS={};  // built dynamically from the snapshot's categories
+const FALLBACK_TRACKS={ai:{label:"🧠 AI",dot:"#4a4dd4"},content_gen:{label:"🎨 Content generation",dot:"#c02f7d"},financial:{label:"📈 Financial",dot:"#0b7a5a"}};
 const RECEPT={positive:["pos","👍 positive"],negative:["neg","👎 negative"],mixed:["mix","🤷 mixed"],neutral:["neu","😐 neutral"],unknown:["neu","❔ unknown"]};
 const SENT={bullish:["pos","🟢 bullish"],bearish:["neg","🔴 bearish"],mixed:["mix","🟡 mixed"],neutral:["neu","⚪ neutral"]};
 const state={track:"all",view:"sent",q:""};
@@ -170,15 +178,28 @@ async function load(){
   }catch(e){ document.getElementById("feed").innerHTML=`<div class="empty">Could not load signals.json — has the agent pushed a snapshot yet?</div>`; return; }
   renderStats(); render();
 }
+function renderChips(){
+  const el=document.getElementById("trackchips"); if(!el)return;
+  el.innerHTML=[`<button class="chip" data-t="all" aria-pressed="${state.track==="all"}">All</button>`]
+    .concat(Object.keys(TRACKS).map(k=>
+      `<button class="chip" data-t="${esc(k)}" aria-pressed="${state.track===k}"><span class="dot" style="background:${TRACKS[k].dot}"></span>${esc(TRACKS[k].label)}</button>`)).join("");
+}
 function renderConfig(cfg){
   const el=document.getElementById("cfgbody"); if(!el||!cfg)return;
+  const cats=cfg.categories;
+  if(cats&&Object.keys(cats).length){
+    TRACKS={}; for(const k of Object.keys(cats))TRACKS[k]={label:cats[k].label||k,dot:cats[k].color||"#888"};
+  }else if(!Object.keys(TRACKS).length){TRACKS={...FALLBACK_TRACKS};}
+  if(state.track!=="all"&&!TRACKS[state.track])state.track="all";
+  renderChips();
   const prefs=cfg.preferences||[], subs=cfg.subreddits||{};
   let html=`<div class="cfg-h first">Interests — an item is sent only if it matches one (or is breaking)</div>`;
   html+= prefs.length ? `<ul class="cfg-prefs">`+prefs.map(p=>`<li>${esc(p)}</li>`).join("")+`</ul>` : `<p class="cfg-empty">none set — every relevant item is sent</p>`;
-  html+=`<div class="cfg-h">Subreddits watched</div>`;
+  html+=`<div class="cfg-h">Categories &amp; subreddits watched</div>`;
   for(const tk of Object.keys(TRACKS)){
-    const list=subs[tk]||[]; if(!list.length)continue;
-    html+=`<div class="cfg-track"><span class="cfg-tname" style="color:${TRACKS[tk].dot}">${esc(TRACKS[tk].label)}:</span>`+list.map(s=>`<span class="cfg-sub">r/${esc(s)}</span>`).join("")+`</div>`;
+    const list=(cats&&cats[tk]&&cats[tk].subreddits)||subs[tk]||[];
+    html+=`<div class="cfg-track"><span class="cfg-tname" style="color:${TRACKS[tk].dot}">${esc(TRACKS[tk].label)}:</span>`+
+      (list.length?list.map(s=>`<span class="cfg-sub">r/${esc(s)}</span>`).join(""):`<span class="cfg-empty">—</span>`)+`</div>`;
   }
   const p=[];
   if(cfg.hot_limit!=null)p.push(`top ${cfg.hot_limit} hottest/sub`);
@@ -190,9 +211,11 @@ function renderConfig(cfg){
 function renderStats(){
   const sent=ALL.filter(x=>x.sent);
   const byT=t=>sent.filter(x=>x.track===t).length;
-  document.getElementById("stats").innerHTML=[
-    ["Analysed",ALL.length],["Sent",sent.length],["AI",byT("ai")],["Content-gen",byT("content_gen")],["Financial",byT("financial")],
-  ].map(([l,n])=>`<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+  const shortLabel=l=>String(l).replace(/^[^\p{L}\p{N}]+/u,"").trim();
+  const rows=[["Analysed",ALL.length],["Sent",sent.length]]
+    .concat(Object.keys(TRACKS).map(k=>[shortLabel(TRACKS[k].label),byT(k)]));
+  document.getElementById("stats").innerHTML=rows
+    .map(([l,n])=>`<div class="stat"><div class="n">${n}</div><div class="l">${esc(l)}</div></div>`).join("");
 }
 function matches(it){
   if(state.track!=="all"&&it.track!==state.track)return false;
@@ -225,7 +248,8 @@ function card(it){
     body=`<p class="summary">${esc(x.one_liner||"")}</p><p class="recept"><span class="pill ${pill[0]}">${pill[1]}</span>${esc(x.reception_summary||"")}</p>`;
   }
   const src=it.source_url?`<a href="${esc(it.source_url)}" target="_blank" rel="noopener">source ↗</a>`:"";
-  return `<article class="card ${it.track}${it.matches_prefs?" hit":""}">${it.matches_prefs?`<img class="card-salute" src="salute.png" alt="dictator approves">`:""}<div class="row1"><span class="sr">r/${esc(it.subreddit)}</span>${badges}</div><div class="title">${esc(title)}</div>${body}<div class="foot">${src}<a href="${esc(it.permalink)}" target="_blank" rel="noopener">thread ↗</a><span class="date">${esc(it.analysed_at||"").slice(0,16).replace("T"," ")}</span></div></article>`;
+  const tc=(TRACKS[it.track]&&TRACKS[it.track].dot)||"var(--sig)";
+  return `<article class="card ${it.track}${it.matches_prefs?" hit":""}" style="--tc:${tc}">${it.matches_prefs?`<img class="card-salute" src="salute.png" alt="dictator approves">`:""}<div class="row1"><span class="sr">r/${esc(it.subreddit)}</span>${badges}</div><div class="title">${esc(title)}</div>${body}<div class="foot">${src}<a href="${esc(it.permalink)}" target="_blank" rel="noopener">thread ↗</a><span class="date">${esc(it.analysed_at||"").slice(0,16).replace("T"," ")}</span></div></article>`;
 }
 function render(){
   const shown=ALL.filter(matches);
@@ -240,12 +264,15 @@ function render(){
   else{feed.className="feed"+(state.track==="all"?"":" one");feed.innerHTML=html;}
   document.getElementById("count").textContent=`${shown.length} shown`;
 }
-document.querySelectorAll("#trackchips .chip").forEach(b=>b.onclick=()=>{document.querySelectorAll("#trackchips .chip").forEach(x=>x.setAttribute("aria-pressed",x===b));state.track=b.dataset.t;render();});
+document.getElementById("trackchips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;document.querySelectorAll("#trackchips .chip").forEach(x=>x.setAttribute("aria-pressed",x===b));state.track=b.dataset.t;render();});
 document.querySelectorAll("#viewtabs .chip").forEach(b=>b.onclick=()=>{document.querySelectorAll("#viewtabs .chip").forEach(x=>x.setAttribute("aria-pressed",x===b));state.view=b.dataset.v;render();});
 document.getElementById("search").oninput=e=>{state.q=e.target.value;render();};
 load();
 setInterval(load,5*60*1000);
-(function(){var w=document.getElementById("watcher");if(!w)return;function peek(){w.classList.toggle("left",Math.random()<0.5);w.classList.add("show");setTimeout(function(){w.classList.remove("show");},4500);}setTimeout(peek,5000);setInterval(peek,32000);})();
+// The permanent eye: this snapshot takes no orders — point visitors to the local command post.
+(function(){var f=document.getElementById("dict-fab"),b=document.getElementById("dict-bubble"),t;if(!f||!b)return;
+  f.addEventListener("click",function(){b.classList.toggle("show");clearTimeout(t);if(b.classList.contains("show"))t=setTimeout(function(){b.classList.remove("show");},6000);});
+  document.addEventListener("click",function(e){if(!f.contains(e.target)&&!b.contains(e.target))b.classList.remove("show");});})();
 </script>
 </body>
 </html>

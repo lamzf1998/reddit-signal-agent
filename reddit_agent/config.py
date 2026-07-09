@@ -93,45 +93,78 @@ ENRICH_MAX_CHARS = int(os.getenv("ENRICH_MAX_CHARS", "4000"))
 # Matched case-insensitively against the `<Sub>` in `<Sub>_posts.json`.
 # Financial subs are listed but absent from the current corpus; the track
 # stays dormant until their data appears.
-_DEFAULT_TRACK_SUBS = {
-    "ai": [
-        "ArtificialInteligence", "Artificial", "OpenAI", "Singularity",
-        "agi", "technology", "Futurology", "automation", "vibecoding",
-    ],
-    "content_gen": [
-        "StableDiffusion", "Midjourney", "ConceptArt", "DigitalArt",
-        "Illustration",
-    ],
-    "financial": [
-        "stocks", "investing", "wallstreetbets", "StockMarket", "NVDA_Stock",
-    ],
+# Categories are dynamic and editable (via the local dashboard). Each has a
+# label, colour, description (drives its extraction prompt), and subreddits.
+_DEFAULT_CATEGORIES = {
+    "ai": {"label": "🧠 AI — tools & news", "color": "#4a4dd4",
+           "description": "AI tools, frameworks, and model releases, plus notable AI news/analysis about companies, models, agents, chips, and datacenters.",
+           "subreddits": ["ArtificialInteligence", "Artificial", "OpenAI", "Singularity",
+                          "agi", "technology", "Futurology", "automation", "vibecoding"]},
+    "content_gen": {"label": "🎨 Content generation", "color": "#c02f7d",
+           "description": "New image/video generation models, workflows, custom nodes, and prompt guides.",
+           "subreddits": ["StableDiffusion", "Midjourney", "ConceptArt", "DigitalArt", "Illustration"]},
+    "financial": {"label": "📈 Financial", "color": "#0b7a5a",
+           "description": "Posts about AI in the markets: AI stocks, AI capex and datacenter buildout, AI-driven market moves. Report attributed sentiment and opinion, never advice.",
+           "subreddits": ["stocks", "investing", "wallstreetbets", "StockMarket", "NVDA_Stock"]},
 }
-
-# Subreddit lists are editable via the local dashboard; persisted here.
-SUBS_FILE = PROJECT_ROOT / "config_subs.json"
+CATEGORIES_FILE = PROJECT_ROOT / "categories.json"
+SUBS_FILE = PROJECT_ROOT / "config_subs.json"  # legacy flat format (auto-migrated)
 PREFERENCES_FILE = PROJECT_ROOT / "preferences.txt"
+_PALETTE = ["#4a4dd4", "#c02f7d", "#0b7a5a", "#b96a10", "#7c3aed", "#0891b2", "#be123c", "#4d7c0f"]
 
 
-def _load_track_subs() -> dict:
-    """Track→subreddits from config_subs.json, falling back to the defaults."""
-    if SUBS_FILE.exists():
+def _norm_cat(key, meta, i):
+    return {
+        "label": meta.get("label", key.replace("_", " ").title()),
+        "color": meta.get("color", _PALETTE[i % len(_PALETTE)]),
+        "description": meta.get("description", ""),
+        "subreddits": list(meta.get("subreddits", [])),
+    }
+
+
+def _load_categories() -> dict:
+    import json
+    if CATEGORIES_FILE.exists():
         try:
-            import json
-            data = json.loads(SUBS_FILE.read_text(encoding="utf-8"))
-            return {t: [s for s in data.get(t, _DEFAULT_TRACK_SUBS[t])] for t in _DEFAULT_TRACK_SUBS}
+            data = json.loads(CATEGORIES_FILE.read_text(encoding="utf-8"))
+            if isinstance(data, dict) and data:
+                return {k: _norm_cat(k, v, i) for i, (k, v) in enumerate(data.items())}
         except Exception:
             pass
-    return {t: list(v) for t, v in _DEFAULT_TRACK_SUBS.items()}
+    if SUBS_FILE.exists():  # migrate legacy {key:[subs]}
+        try:
+            flat = json.loads(SUBS_FILE.read_text(encoding="utf-8"))
+            if isinstance(flat, dict) and flat:
+                return {k: _norm_cat(k, {**_DEFAULT_CATEGORIES.get(k, {}), "subreddits": subs}, i)
+                        for i, (k, subs) in enumerate(flat.items())}
+        except Exception:
+            pass
+    return {k: _norm_cat(k, v, i) for i, (k, v) in enumerate(_DEFAULT_CATEGORIES.items())}
 
 
-TRACK_SUBS = _load_track_subs()
+def save_categories(cats: dict) -> None:
+    import json
+    CATEGORIES_FILE.write_text(json.dumps(cats, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def _derive():
+    global TRACK_SUBS, TRACK_LABELS, TRACK_COLORS, CATEGORY_DESC
+    TRACK_SUBS = {k: c["subreddits"] for k, c in CATEGORIES.items()}
+    TRACK_LABELS = {k: c["label"] for k, c in CATEGORIES.items()}
+    TRACK_COLORS = {k: c["color"] for k, c in CATEGORIES.items()}
+    CATEGORY_DESC = {k: c["description"] for k, c in CATEGORIES.items()}
+
+
+CATEGORIES = _load_categories()
+_derive()
 
 
 def reload() -> None:
-    """Re-read the editable config files (preferences + subreddits) in-process."""
-    global USER_PREFERENCES, TRACK_SUBS
+    """Re-read the editable config files (preferences + categories) in-process."""
+    global USER_PREFERENCES, CATEGORIES
     USER_PREFERENCES = _load_preferences()
-    TRACK_SUBS = _load_track_subs()
+    CATEGORIES = _load_categories()
+    _derive()
 
 # --- live self-collection --------------------------------------------------
 # Self-collect ALL tracks' subs before each run (fully real-time, self-contained).
@@ -156,9 +189,3 @@ REDDIT_USER_AGENT = os.getenv(
     "REDDIT_USER_AGENT", "windows:reddit-signal-agent:0.1 (personal digest bot)"
 )
 COLLECT_POSTS_PER_SUB = int(os.getenv("COLLECT_POSTS_PER_SUB", "25"))
-
-TRACK_LABELS = {
-    "ai": "🧠 AI — new tools & updates",
-    "content_gen": "🎨 Content generation — workflows, guides & models",
-    "financial": "📈 Financial — AI-related market opinion",
-}

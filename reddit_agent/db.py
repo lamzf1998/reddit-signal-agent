@@ -36,6 +36,14 @@ def _connect() -> sqlite3.Connection:
                extraction    TEXT
            )"""
     )
+    # Which subreddits have already been through an extraction run — lets the
+    # dashboard tell when freshly-added subs still need a run.
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS extracted_subs (
+               subreddit    TEXT PRIMARY KEY,
+               first_run_at TEXT
+           )"""
+    )
     return conn
 
 
@@ -93,6 +101,52 @@ def fetch_analyses(limit: int = 500, track: str | None = None,
     return out
 
 
+def mark_subs_extracted(subs) -> None:
+    """Record subreddits that have now been through an extraction run."""
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+    rows = [(str(s).strip().lower(), now) for s in subs if str(s).strip()]
+    if not rows:
+        return
+    with closing(_connect()) as conn:
+        conn.executemany(
+            "INSERT OR IGNORE INTO extracted_subs (subreddit, first_run_at) VALUES (?, ?)", rows)
+        conn.commit()
+
+
+def extracted_subs() -> set:
+    with closing(_connect()) as conn:
+        return {r[0] for r in conn.execute("SELECT subreddit FROM extracted_subs").fetchall()}
+
+
+def new_subreddits() -> list:
+    """Configured subreddits that have not yet been through an extraction run."""
+    done = extracted_subs()
+    out, seen_lc = [], set()
+    for subs in config.TRACK_SUBS.values():
+        for s in subs:
+            lc = s.lower()
+            if lc not in done and lc not in seen_lc:
+                seen_lc.add(lc); out.append(s)
+    return out
+
+
+def config_summary() -> dict:
+    """The active extraction config, for display on the dashboard."""
+    prefs = [ln.strip() for ln in config.USER_PREFERENCES.splitlines() if ln.strip()]
+    rh = config.COLLECT_RECENCY_HOURS
+    rh = int(rh) if rh == int(rh) else rh
+    return {
+        "preferences": prefs,
+        "categories": {k: {"label": config.TRACK_LABELS[k], "color": config.TRACK_COLORS[k],
+                           "subreddits": list(config.TRACK_SUBS[k])} for k in config.CATEGORIES},
+        "subreddits": {t: list(subs) for t, subs in config.TRACK_SUBS.items()},
+        "new_subreddits": new_subreddits(),
+        "hot_limit": config.COLLECT_HOT_LIMIT,
+        "recency_hours": rh,
+        "relevance_threshold": config.RELEVANCE_THRESHOLD,
+    }
+
+
 def export_json(path) -> None:
     """Write a static snapshot (for GitHub Pages / any static host)."""
     from pathlib import Path
@@ -101,6 +155,7 @@ def export_json(path) -> None:
     payload = {
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         "relevance_threshold": config.RELEVANCE_THRESHOLD,
+        "config": config_summary(),
         "signals": fetch_analyses(limit=2000),
     }
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -118,4 +173,5 @@ def stats() -> dict:
     return {
         "total_analysed": total, "total_sent": sent, "sent_by_track": by_track,
         "relevance_threshold": config.RELEVANCE_THRESHOLD,
+        "config": config_summary(),
     }

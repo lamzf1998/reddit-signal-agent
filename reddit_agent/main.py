@@ -177,6 +177,7 @@ def run(date: str | None, only_track: str | None, dry_run: bool,
 
     # Export a static snapshot for the GitHub Pages dashboard.
     if not dry_run:
+        db.mark_subs_extracted([s for subs in config.TRACK_SUBS.values() for s in subs])
         db.export_json(config.PROJECT_ROOT / "docs" / "signals.json")
         print("Exported docs/signals.json")
 

@@ -10,7 +10,7 @@ echo ---- run started %DATE% %TIME% ---->> "reddit_agent\.state\run.log"
 
 REM Publish the snapshot to GitHub Pages (only if this folder is a git repo).
 if exist "%~dp0.git" (
-  git -C "%~dp0" add docs/signals.json >> "reddit_agent\.state\run.log" 2>&1
+  git -C "%~dp0" add docs >> "reddit_agent\.state\run.log" 2>&1
   git -C "%~dp0" commit -m "update signals snapshot" >> "reddit_agent\.state\run.log" 2>&1
   git -C "%~dp0" push >> "reddit_agent\.state\run.log" 2>&1
 )

@@ -92,7 +92,18 @@ _PREFS = (
 
 
 def _system_for(track: str) -> str:
-    system = _SYSTEM[track] + _IMPORTANCE
+    base = _SYSTEM.get(track)
+    if base is None:  # a custom category — build a prompt from its description
+        label = config.TRACK_LABELS.get(track, track)
+        desc = config.CATEGORY_DESC.get(track, "") or label
+        base = (
+            f"You screen Reddit posts for the category '{label}'. KEEP a post if it is "
+            f"substantive and on-topic for: {desc}. REJECT memes, low-effort posts, and "
+            f"off-topic content. In `name` put a short topic/tool name; in `one_liner` "
+            f"summarize what it is; summarize community reception from the comments. Favor "
+            f"precision: when unsure set relevant=false. Respond only with the requested JSON."
+        )
+    system = base + _IMPORTANCE
     if config.USER_PREFERENCES:
         system += _PREFS.format(prefs=config.USER_PREFERENCES)
     else:
@@ -168,7 +179,9 @@ def _extract_anthropic(system: str, prompt: str, schema: type[BaseModel]):
 
 class _SubIdea(BaseModel):
     name: str
-    track: Literal["ai", "content_gen", "financial"]
+    category: str          # an existing category KEY, or a new snake_case key if is_new_category
+    category_label: str    # display label (existing label, or proposed new one)
+    is_new_category: bool
     reason: str
 
 
@@ -178,23 +191,26 @@ class _SubSuggestion(BaseModel):
 
 
 _SUGGEST_SYS = (
-    "You help configure 'Reddictator', a Reddit monitoring agent with three tracks: "
-    "ai (AI tools & news), content_gen (image/video generation models & workflows), "
-    "financial (markets & stocks). Given the user's interests and message, suggest real, "
-    "active subreddits (bare names, no 'r/') that match, each tagged with the best-fit "
-    "track and a one-line reason. Do NOT suggest subreddits already in their watch list. "
-    "Then ask ONE short follow-up question to uncover more of their interests. Keep 'reply' "
-    "to 1-2 sentences. Respond only with the requested JSON."
+    "You are The Dictator, the assistant behind 'Reddictator', a Reddit monitoring agent. "
+    "Given the user's interests, suggest real, active subreddits (bare names, no 'r/') that match. "
+    "Assign each to the best-fitting EXISTING category by its exact key; if none fit, set "
+    "is_new_category=true and propose a concise snake_case category key plus a human-readable label. "
+    "Do NOT suggest subreddits already being watched. Then ask ONE short follow-up question to uncover "
+    "more of the user's interests. Keep 'reply' to 1-2 sentences, in a lightly commanding but helpful "
+    "tone. Respond only with the requested JSON."
 )
 
 
 def suggest_subreddits(interests, watching, message="", history=None) -> dict:
-    """Chatbot: propose subreddits matching the user's interests, ask for more."""
+    """Chatbot: propose subreddits (assigned to existing or new categories), ask for more."""
+    cats = config.CATEGORIES
+    cat_lines = "\n".join(f"- {k} ({v['label']}): {v['description']}" for k, v in cats.items())
+    system = (_SUGGEST_SYS + "\n\nEXISTING CATEGORIES:\n" + cat_lines)
     lines = ["USER INTERESTS:"] + ([f"- {i}" for i in interests] or ["- (none yet)"])
     lines.append("\nALREADY WATCHING: " + (", ".join(watching) or "(none)"))
     lines.append(f"\nUSER MESSAGE: {message}" if message
                  else "\nSuggest subreddits that match these interests.")
-    msgs = [{"role": "system", "content": _SUGGEST_SYS}]
+    msgs = [{"role": "system", "content": system}]
     for h in (history or [])[-6:]:
         msgs.append({"role": h.get("role", "user"), "content": h.get("content", "")})
     msgs.append({"role": "user", "content": "\n".join(lines)})
