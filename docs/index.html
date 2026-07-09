@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Reddicator</title>
+<title>Reddictator</title>
 <style>
   :root{--bg:#e9ebef;--surface:#f8f9fb;--surface-2:#f0f2f5;--ink:#14181d;--muted:#5c6673;--faint:#8a93a0;--line:rgba(20,24,29,.12);--line-strong:rgba(20,24,29,.22);--sig:#b96a10;--sig-soft:rgba(224,138,30,.14);--fin:#0b7a5a;--ai:#4a4dd4;--gen:#c02f7d;--good:#0b7a5a;--warn:#b96a10;--crit:#c23b3b;--shadow:0 1px 2px rgba(20,24,29,.05),0 8px 24px rgba(20,24,29,.06);--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--mono:ui-monospace,"Cascadia Code","Segoe UI Mono",Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
   @media (prefers-color-scheme:dark){:root{--bg:#0d1015;--surface:#151a21;--surface-2:#1b2129;--ink:#e7ebf0;--muted:#97a1ad;--faint:#6b7684;--line:rgba(231,235,240,.12);--line-strong:rgba(231,235,240,.22);--sig:#f0a744;--sig-soft:rgba(240,167,68,.13);--fin:#34d3a2;--ai:#8b8ef8;--gen:#f472b6;--good:#34d3a2;--warn:#f0a744;--crit:#f07171;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.4)}}
@@ -16,7 +16,7 @@
   .sub{color:var(--muted);margin:0}
   .hrow{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}
   .regime{margin:0;text-align:center;flex:none}
-  .regime img,.regime .fallback{width:78px;height:78px;border-radius:50%;object-fit:cover;border:2px solid var(--sig);box-shadow:var(--shadow);display:block}
+  .regime img,.regime .fallback{width:78px;height:78px;border-radius:50%;object-fit:cover;border:2px solid var(--sig);box-shadow:var(--shadow);display:block;margin:0 auto}
   .regime .fallback{display:none;align-items:center;justify-content:center;font-size:34px;background:var(--surface-2)}
   .regime figcaption{font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--sig);margin-top:6px;font-weight:700;text-transform:uppercase}
   @media (max-width:520px){.regime{display:none}}
@@ -93,7 +93,7 @@
     <div class="hrow">
       <div>
         <div class="eyebrow">Static snapshot · GitHub Pages</div>
-        <h1>Reddicator</h1>
+        <h1>Reddictator</h1>
         <p class="sub">Every post the agent has analysed, newest first. Sent items are 🆕 NEW in Telegram.</p>
       </div>
       <figure class="regime">
