@@ -8,7 +8,7 @@
   :root{--bg:#e9ebef;--surface:#f8f9fb;--surface-2:#f0f2f5;--ink:#14181d;--muted:#5c6673;--faint:#8a93a0;--line:rgba(20,24,29,.12);--line-strong:rgba(20,24,29,.22);--sig:#b96a10;--sig-soft:rgba(224,138,30,.14);--fin:#0b7a5a;--ai:#4a4dd4;--gen:#c02f7d;--good:#0b7a5a;--warn:#b96a10;--crit:#c23b3b;--shadow:0 1px 2px rgba(20,24,29,.05),0 8px 24px rgba(20,24,29,.06);--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--mono:ui-monospace,"Cascadia Code","Segoe UI Mono",Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
   @media (prefers-color-scheme:dark){:root{--bg:#0d1015;--surface:#151a21;--surface-2:#1b2129;--ink:#e7ebf0;--muted:#97a1ad;--faint:#6b7684;--line:rgba(231,235,240,.12);--line-strong:rgba(231,235,240,.22);--sig:#f0a744;--sig-soft:rgba(240,167,68,.13);--fin:#34d3a2;--ai:#8b8ef8;--gen:#f472b6;--good:#34d3a2;--warn:#f0a744;--crit:#f07171;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.4)}}
   *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1000px;margin:0 auto;padding:0 20px 80px}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 28px 80px}
   header{padding:36px 0 20px;border-bottom:1px solid var(--line-strong)}
   .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--sig);display:flex;align-items:center;gap:9px}
   .eyebrow::before{content:"";width:7px;height:7px;background:var(--sig);border-radius:50%;box-shadow:0 0 0 3px var(--sig-soft)}
@@ -20,6 +20,11 @@
   .regime .fallback{display:none;align-items:center;justify-content:center;font-size:34px;background:var(--surface-2)}
   .regime figcaption{font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--sig);margin-top:6px;font-weight:700;text-transform:uppercase}
   @media (max-width:520px){.regime{display:none}}
+  .lead{display:flex;align-items:center;gap:15px;min-width:0}
+  .claw{width:46px;height:46px;flex:none;color:var(--sig);animation:spin 18s linear infinite}
+  .claw line{stroke:currentColor}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){.claw{animation:none}}
   .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:22px}
   .stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
   .stat .n{font-family:var(--serif);font-size:1.6rem;line-height:1;font-variant-numeric:tabular-nums}
@@ -35,11 +40,9 @@
   .search:focus{outline:2px solid var(--sig);outline-offset:1px}
   .count{font-family:var(--mono);font-size:12px;color:var(--faint);white-space:nowrap}
   .updated{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:8px}
-  .feed{display:grid;grid-template-columns:repeat(3,1fr);gap:0;align-items:stretch;margin-top:16px}
-  .feed.one{grid-template-columns:1fr}
-  .col{display:flex;flex-direction:column;gap:12px;min-width:0;padding:0 30px}
-  .col:first-child{padding-left:0}
-  .col:last-child{padding-right:0}
+  .feed{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;align-items:stretch;margin:16px -26px 0}
+  .feed.one{grid-template-columns:1fr;margin-left:0;margin-right:0}
+  .col{display:flex;flex-direction:column;gap:12px;min-width:0;padding:0 26px}
   .col + .col{border-left:1px solid var(--line-strong)}
   .feed.one .col{padding:0;border-left:none}
   .col .group-h{margin:0}
@@ -67,7 +70,7 @@
   .foot{display:flex;gap:14px;font-family:var(--mono);font-size:11.5px;align-items:center;flex-wrap:wrap;padding-top:9px;border-top:1px solid var(--line)}
   .foot a{color:var(--sig);text-decoration:none}.foot a:hover{text-decoration:underline}.foot .date{color:var(--faint);margin-left:auto}
   .empty{text-align:center;color:var(--faint);font-family:var(--mono);font-size:13px;padding:40px;border:1px dashed var(--line-strong);border-radius:10px}
-  @media (max-width:900px){.feed{grid-template-columns:1fr}.col{padding:0}.col + .col{border-left:none}}
+  @media (max-width:900px){.feed{grid-template-columns:1fr;margin-left:0;margin-right:0}.col{padding:0}.col + .col{border-left:none}}
   @media (max-width:680px){.stats{grid-template-columns:repeat(2,1fr)}.controls{position:static}}
   /* the little guy doing laps around your dashboard */
   .runner{position:fixed;top:0;left:0;z-index:9999;pointer-events:none;animation:lap 15s linear infinite}
@@ -92,10 +95,13 @@
 <div class="wrap">
   <header>
     <div class="hrow">
-      <div>
-        <div class="eyebrow">Static snapshot · GitHub Pages</div>
-        <h1>Reddictator</h1>
-        <p class="sub">Every post the agent has analysed, newest first. Sent items are 🆕 NEW in Telegram.</p>
+      <div class="lead">
+        <svg class="claw" viewBox="0 0 100 100" aria-hidden="true"><g stroke="currentColor" stroke-width="6" stroke-linecap="round"><line x1="50" y1="8" x2="50" y2="34"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(30 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(60 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(90 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(120 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(150 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(180 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(210 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(240 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(270 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(300 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(330 50 50)"/></g></svg>
+        <div>
+          <div class="eyebrow">Static snapshot · GitHub Pages</div>
+          <h1>Reddictator</h1>
+          <p class="sub">Every post the agent has analysed, newest first. Sent items are 🆕 NEW in Telegram.</p>
+        </div>
       </div>
       <figure class="regime">
         <img src="https://icecric.news/wp-content/uploads/2026/07/Kylian-Mbappe-2.webp" alt="Reddit Dictator" referrerpolicy="no-referrer" onerror="this.closest('.regime').style.display='none'">
