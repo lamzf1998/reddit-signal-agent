@@ -1,0 +1,299 @@
+<title>Reddit Signal Agent</title>
+<style>
+  :root {
+    --bg: #e9ebef; --surface: #f8f9fb; --surface-2: #f0f2f5;
+    --ink: #14181d; --muted: #5c6673; --faint: #8a93a0;
+    --line: rgba(20,24,29,.12); --line-strong: rgba(20,24,29,.22);
+    --sig: #b96a10; --sig-soft: rgba(224,138,30,.14);
+    --fin: #0b7a5a; --ai: #4a4dd4; --gen: #c02f7d;
+    --good: #0b7a5a; --warn: #b96a10; --crit: #c23b3b;
+    --shadow: 0 1px 2px rgba(20,24,29,.05), 0 8px 24px rgba(20,24,29,.06);
+    --serif: "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --mono: ui-monospace,"Cascadia Code","Segoe UI Mono",Consolas,monospace;
+    --sans: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1015; --surface: #151a21; --surface-2: #1b2129;
+      --ink: #e7ebf0; --muted: #97a1ad; --faint: #6b7684;
+      --line: rgba(231,235,240,.12); --line-strong: rgba(231,235,240,.22);
+      --sig: #f0a744; --sig-soft: rgba(240,167,68,.13);
+      --fin: #34d3a2; --ai: #8b8ef8; --gen: #f472b6;
+      --good: #34d3a2; --warn: #f0a744; --crit: #f07171;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1015; --surface: #151a21; --surface-2: #1b2129;
+    --ink: #e7ebf0; --muted: #97a1ad; --faint: #6b7684;
+    --line: rgba(231,235,240,.12); --line-strong: rgba(231,235,240,.22);
+    --sig: #f0a744; --sig-soft: rgba(240,167,68,.13);
+    --fin: #34d3a2; --ai: #8b8ef8; --gen: #f472b6;
+    --good: #34d3a2; --warn: #f0a744; --crit: #f07171;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.4);
+  }
+  :root[data-theme="light"] {
+    --bg: #e9ebef; --surface: #f8f9fb; --surface-2: #f0f2f5;
+    --ink: #14181d; --muted: #5c6673; --faint: #8a93a0;
+    --line: rgba(20,24,29,.12); --line-strong: rgba(20,24,29,.22);
+    --sig: #b96a10; --sig-soft: rgba(224,138,30,.14);
+    --fin: #0b7a5a; --ai: #4a4dd4; --gen: #c02f7d;
+    --good: #0b7a5a; --warn: #b96a10; --crit: #c23b3b;
+    --shadow: 0 1px 2px rgba(20,24,29,.05), 0 8px 24px rgba(20,24,29,.06);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .app { background: var(--bg); color: var(--ink); font-family: var(--sans);
+         min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 20px 80px; }
+
+  header.top { padding: 40px 0 22px; border-bottom: 1px solid var(--line-strong); }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+             text-transform: uppercase; color: var(--sig); display: flex; align-items: center; gap: 9px; }
+  .eyebrow::before { content:""; width:7px; height:7px; background:var(--sig); border-radius:50%;
+                     box-shadow: 0 0 0 3px var(--sig-soft); }
+  h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(2rem,4.5vw,2.9rem);
+       letter-spacing:-.015em; margin: 12px 0 6px; }
+  .sub { color: var(--muted); max-width: 62ch; margin: 0; }
+
+  .stats { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; margin-top: 26px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+          padding: 14px 16px; box-shadow: var(--shadow); }
+  .stat .n { font-family: var(--serif); font-size: 1.7rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  .stat .l { font-family: var(--mono); font-size: 10px; letter-spacing:.08em; text-transform: uppercase;
+             color: var(--faint); margin-top: 7px; }
+  .stat.brk .n { color: var(--crit); }
+
+  .controls { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent);
+              backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+              padding: 14px 0; margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { font-family: var(--mono); font-size: 12px; letter-spacing:.02em; padding: 6px 12px;
+          border: 1px solid var(--line-strong); border-radius: 999px; background: transparent;
+          color: var(--muted); cursor: pointer; transition: .12s; }
+  .chip:hover { border-color: var(--sig); color: var(--ink); }
+  .chip[aria-pressed="true"] { background: var(--sig); border-color: var(--sig); color: #fff; font-weight: 600; }
+  @media (prefers-color-scheme: dark) { .chip[aria-pressed="true"] { color: #14181d; } }
+  :root[data-theme="dark"] .chip[aria-pressed="true"] { color: #14181d; }
+  :root[data-theme="light"] .chip[aria-pressed="true"] { color: #fff; }
+  .chip .c { opacity: .7; }
+
+  .toggle { font-family: var(--mono); font-size: 12px; display: inline-flex; align-items: center; gap: 7px;
+            color: var(--muted); cursor: pointer; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); }
+  .toggle input { accent-color: var(--sig); width: 15px; height: 15px; }
+  .search { flex: 1; min-width: 160px; font-family: var(--sans); font-size: 14px; padding: 8px 12px;
+            border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--ink); }
+  .search:focus { outline: 2px solid var(--sig); outline-offset: 1px; border-color: var(--sig); }
+  .count { font-family: var(--mono); font-size: 12px; color: var(--faint); white-space: nowrap; }
+
+  .feed { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; }
+  .group-h { font-family: var(--mono); font-size: 11px; letter-spacing:.12em; text-transform: uppercase;
+             color: var(--faint); margin: 18px 0 2px; display: flex; align-items: center; gap: 8px; }
+  .group-h .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--tc);
+          border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow); }
+  .card.ai { --tc: var(--ai); } .card.content_gen { --tc: var(--gen); } .card.financial { --tc: var(--fin); }
+  .row1 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .sr { font-family: var(--mono); font-size: 12px; color: var(--tc); font-weight: 600; }
+  .badge { font-family: var(--mono); font-size: 10px; letter-spacing:.05em; text-transform: uppercase;
+           padding: 2px 7px; border-radius: 5px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+  .badge.brk { color: var(--crit); background: color-mix(in srgb, var(--crit) 13%, transparent); border-color: transparent; font-weight: 700; }
+  .badge.pref { color: var(--sig); background: var(--sig-soft); border-color: transparent; }
+  .title { font-family: var(--serif); font-size: 1.18rem; font-weight: 600; margin: 2px 0 5px; text-wrap: balance; }
+  .summary { color: var(--ink); font-size: 14.5px; margin: 0 0 10px; }
+  .recept { font-size: 13.5px; color: var(--muted); margin: 0 0 10px; }
+  .pill { font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin-right: 6px; white-space: nowrap; }
+  .pos { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+  .neg { color: var(--crit); background: color-mix(in srgb, var(--crit) 14%, transparent); }
+  .mix { color: var(--warn); background: var(--sig-soft); }
+  .neu { color: var(--muted); background: var(--surface-2); }
+  .tickers { font-family: var(--mono); font-size: 12px; color: var(--fin); margin: 0 0 8px; }
+  .foot { display: flex; gap: 14px; font-family: var(--mono); font-size: 11.5px; align-items: center; flex-wrap: wrap;
+          padding-top: 10px; border-top: 1px solid var(--line); }
+  .foot a { color: var(--sig); text-decoration: none; }
+  .foot a:hover { text-decoration: underline; }
+  .foot .date { color: var(--faint); margin-left: auto; }
+
+  .empty { text-align: center; color: var(--faint); font-family: var(--mono); font-size: 13px;
+           padding: 40px; border: 1px dashed var(--line-strong); border-radius: 10px; }
+  .note { font-family: var(--mono); font-size: 11.5px; color: var(--faint); margin-top: 40px;
+          padding-top: 16px; border-top: 1px solid var(--line); line-height: 1.6; }
+
+  .themebtn { position: fixed; top: 14px; right: 14px; z-index: 10; font-family: var(--mono); font-size: 12px;
+              padding: 6px 11px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface);
+              color: var(--muted); cursor: pointer; box-shadow: var(--shadow); }
+
+  @media (max-width: 680px) {
+    .stats { grid-template-columns: repeat(2,1fr); }
+    .controls { position: static; }
+  }
+</style>
+
+<div class="app">
+  <button class="themebtn" id="themebtn">◐ theme</button>
+  <div class="wrap">
+    <header class="top">
+      <div class="eyebrow">Local · qwen2.5:14b · precision-filtered</div>
+      <h1>Reddit Signal Agent</h1>
+      <p class="sub">The browsable view of your digest — AI tools &amp; news, generation workflows &amp; models,
+        and AI-related market signal. Filtered to your interests, deduped, with community reception.</p>
+      <div class="stats" id="stats"></div>
+    </header>
+
+    <div class="controls">
+      <div class="chips" id="trackchips"></div>
+      <label class="toggle"><input type="checkbox" id="brkOnly"> breaking only</label>
+      <label class="toggle"><input type="checkbox" id="prefOnly"> my interests</label>
+      <input class="search" id="search" placeholder="Search signal…" autocomplete="off">
+      <span class="count" id="count"></span>
+    </div>
+
+    <div class="feed" id="feed"></div>
+
+    <p class="note">Snapshot for browsing. AI &amp; content-generation items are real extractions from your
+      corpus (2026-07-04); financial items are illustrative — that track goes live once your Reddit API key is set.
+      Live delivery is per-subreddit Telegram messages, hourly.</p>
+  </div>
+</div>
+
+<script>
+const TRACKS = {
+  ai: { label: "AI — tools & news", dot: "var(--ai)" },
+  content_gen: { label: "Content generation", dot: "var(--gen)" },
+  financial: { label: "Financial", dot: "var(--fin)" },
+};
+
+const DATA = [
+  // ---- AI (real extractions) ----
+  { track:"ai", sr:"Artificial", kind:"news", title:"System Prompt Extraction Vulnerability",
+    summary:"AI agents can still be tricked into revealing their system prompts via a simple 'repeat the text above' probe, exposing sensitive config.",
+    reception:"pos", recept:"Broad agreement there's no clean defense against prompt injection; commenters share real production examples.",
+    importance:"notable", pref:true, source:"https://reddit.com/r/artificial/comments/1ums1ou/", thread:"https://reddit.com/r/artificial/comments/1ums1ou/", date:"2026-07-04" },
+  { track:"ai", sr:"Singularity", kind:"news", title:"Nvidia Sol 5.6 Review",
+    summary:"A principal engineer at Nvidia reviews the new Sol 5.6 model, highlighting gains over the prior version on complex tasks.",
+    reception:"pos", recept:"Strong engagement; users praise the functionality jump and note it handles multi-step work far better.",
+    importance:"notable", pref:true, source:"https://x.com/blelbach/status/2073232846731301347", thread:"https://reddit.com/r/singularity/comments/1un9d4k/", date:"2026-07-04" },
+  { track:"ai", sr:"Futurology", kind:"news", title:"European AI Ban on Palantir",
+    summary:"A growing number of European governments are moving off US-based Palantir AI tooling toward domestic providers, citing strategic dependency.",
+    reception:"mix", recept:"Split between support for sovereignty and skepticism about how real the 'ban' is; debate over whether Chinese tech fills the gap.",
+    importance:"notable", pref:true, source:"https://www.theguardian.com/world/2026/jun/16/", thread:"https://reddit.com/r/Futurology/comments/1un7ghm/", date:"2026-07-04" },
+  { track:"ai", sr:"Futurology", kind:"news", title:"Datacenter Recall Elections",
+    summary:"US residents are recalling local officials who approved data-center projects, driving new moratoriums on construction.",
+    reception:"pos", recept:"Bipartisan support in comments for holding officials accountable over datacenter siting.",
+    importance:"notable", pref:true, source:"https://www.theguardian.com/us-news/2026/jul/03/", thread:"https://reddit.com/r/Futurology/comments/1umylvz/", date:"2026-07-04" },
+
+  // ---- Content generation (real extractions) ----
+  { track:"content_gen", sr:"StableDiffusion", kind:"model", title:"Krea-2 Depth ControlNet LoRA",
+    summary:"Depth-conditioned ControlNet LoRA for Krea-2 that holds near-perfect 3D structure while allowing prompt-driven content and style.",
+    reception:"pos", recept:"Positive; users testing across hardware, keen on further improvements — some limits on complex character poses.",
+    importance:"notable", pref:true, source:"https://huggingface.co/Patil/Krea-2-depth-controlnet", thread:"https://reddit.com/r/StableDiffusion/comments/1ummd2h/", date:"2026-07-04" },
+  { track:"content_gen", sr:"StableDiffusion", kind:"model", title:"Qwen3.5 INT8 + ConvRot text encoders for ComfyUI",
+    summary:"Qwen3.5 converted to INT8 with ConvRot quantization — drop-in replacement for the BF16 encoders in ComfyUI, runs on 8GB VRAM.",
+    reception:"pos", recept:"Positive engagement; questions on usage and hardware, minor corrections on model sizes.",
+    importance:"notable", pref:true, source:"https://huggingface.co/Winnougan/Qwen-3.5-INT8-Convrot-Comfy", thread:"https://reddit.com/r/StableDiffusion/comments/1un547d/", date:"2026-07-04" },
+  { track:"content_gen", sr:"StableDiffusion", kind:"workflow", title:"2px Grid Nyquist Notch GLSL Shader Node",
+    summary:"A GLSL shader node that removes a 2px repeating grid pattern left by the Qwen-Image / Wan 2.1 VAE on decoded images.",
+    reception:"pos", recept:"Grateful reception and clear quality gains, though some note it can blur fine detail — a sharpness trade-off.",
+    importance:"notable", pref:false, source:"https://pastebin.com/v7y1z0SH", thread:"https://reddit.com/r/StableDiffusion/comments/1umwhq7/", date:"2026-07-04" },
+
+  // ---- Financial (illustrative — track goes live with Reddit key) ----
+  { track:"financial", sr:"stocks", kind:"opinion", title:"NVDA datacenter capex guidance raised again",
+    summary:"Thread dissects Nvidia's raised datacenter capex outlook and what hyperscaler order books imply for the next two quarters.",
+    reception:"pos", sentiment:"bullish", tickers:["NVDA"],
+    recept:"Consensus leans bullish on near-term demand; a minority flags concentration risk in a few hyperscaler customers.",
+    importance:"breaking", pref:true, thread:"https://reddit.com/r/stocks/", date:"2026-07-08" },
+  { track:"financial", sr:"investing", kind:"opinion", title:"Is the AI capex cycle a bubble?",
+    summary:"Long discussion weighing AI infrastructure spend against realized revenue, with comparisons to prior buildout cycles.",
+    reception:"mix", sentiment:"mixed", tickers:["NVDA","MSFT","GOOGL"],
+    recept:"Genuinely split — bulls cite durable demand, bears point to depreciation and unproven ROI on training spend.",
+    importance:"notable", pref:true, thread:"https://reddit.com/r/investing/", date:"2026-07-08" },
+  { track:"financial", sr:"StockMarket", kind:"opinion", title:"Hyperscaler datacenter buildout — supply chain read",
+    summary:"Breakdown of power, cooling, and networking bottlenecks in the datacenter buildout and which suppliers benefit.",
+    reception:"pos", sentiment:"bullish", tickers:["NVDA","AMD","VRT"],
+    recept:"Upbeat on picks-and-shovels names; some caution that power availability is the real constraint, not chips.",
+    importance:"notable", pref:true, thread:"https://reddit.com/r/StockMarket/", date:"2026-07-08" },
+];
+
+const state = { track: "all", brk: false, pref: false, q: "" };
+const RECEPT = { pos:["pos","👍 positive"], neg:["neg","👎 negative"], mix:["mix","🤷 mixed"], neu:["neu","😐 neutral"] };
+const SENT = { bullish:["pos","🟢 bullish"], bearish:["neg","🔴 bearish"], mixed:["mix","🟡 mixed"], neutral:["neu","⚪ neutral"] };
+
+function esc(s){ return (s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function matches(it){
+  if (state.track !== "all" && it.track !== state.track) return false;
+  if (state.brk && it.importance !== "breaking") return false;
+  if (state.pref && !it.pref) return false;
+  if (state.q){
+    const hay = (it.title+" "+it.summary+" "+it.sr+" "+(it.tickers||[]).join(" ")).toLowerCase();
+    if (!hay.includes(state.q.toLowerCase())) return false;
+  }
+  return true;
+}
+
+function card(it){
+  const pill = it.sentiment ? SENT[it.sentiment] : RECEPT[it.reception];
+  const badges = [
+    `<span class="badge">${esc(it.kind)}</span>`,
+    it.importance==="breaking" ? `<span class="badge brk">breaking</span>` : "",
+    it.pref ? `<span class="badge pref">★ interest</span>` : "",
+  ].join("");
+  const tickers = it.tickers ? `<div class="tickers">${it.tickers.map(t=>"$"+esc(t)).join("  ")}</div>` : "";
+  const src = it.source ? `<a href="${esc(it.source)}" target="_blank" rel="noopener">source ↗</a>` : "";
+  return `<article class="card ${it.track}">
+    <div class="row1"><span class="sr">r/${esc(it.sr)}</span>${badges}</div>
+    <div class="title">${esc(it.title)}</div>
+    <p class="summary">${esc(it.summary)}</p>
+    ${tickers}
+    <p class="recept"><span class="pill ${pill[0]}">${pill[1]}</span>${esc(it.recept)}</p>
+    <div class="foot">${src}<a href="${esc(it.thread)}" target="_blank" rel="noopener">thread ↗</a><span class="date">${esc(it.date)}</span></div>
+  </article>`;
+}
+
+function render(){
+  const shown = DATA.filter(matches);
+  const feed = document.getElementById("feed");
+  if (!shown.length){ feed.innerHTML = `<div class="empty">No signal matches these filters.</div>`; }
+  else {
+    let html = "";
+    for (const tk of Object.keys(TRACKS)){
+      const items = shown.filter(x=>x.track===tk);
+      if (!items.length) continue;
+      html += `<div class="group-h"><span class="dot" style="background:${TRACKS[tk].dot}"></span>${esc(TRACKS[tk].label)} · ${items.length}</div>`;
+      html += items.map(card).join("");
+    }
+    feed.innerHTML = html;
+  }
+  document.getElementById("count").textContent = `${shown.length} / ${DATA.length} signals`;
+}
+
+function renderStats(){
+  const brk = DATA.filter(x=>x.importance==="breaking").length;
+  const byT = t=>DATA.filter(x=>x.track===t).length;
+  document.getElementById("stats").innerHTML = [
+    ["Total", DATA.length, ""], ["Breaking", brk, "brk"],
+    ["AI", byT("ai"), ""], ["Content-gen", byT("content_gen"), ""], ["Financial", byT("financial"), ""],
+  ].map(([l,n,c])=>`<div class="stat ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+}
+
+function renderChips(){
+  const el = document.getElementById("trackchips");
+  const opts = [["all","All",DATA.length], ...Object.keys(TRACKS).map(t=>[t,TRACKS[t].label.split(" ")[0],DATA.filter(x=>x.track===t).length])];
+  el.innerHTML = opts.map(([v,l,n])=>`<button class="chip" data-t="${v}" aria-pressed="${v===state.track}">${esc(l)} <span class="c">${n}</span></button>`).join("");
+  el.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{ state.track=b.dataset.t; renderChips(); render(); });
+}
+
+document.getElementById("brkOnly").onchange = e=>{ state.brk=e.target.checked; render(); };
+document.getElementById("prefOnly").onchange = e=>{ state.pref=e.target.checked; render(); };
+document.getElementById("search").oninput = e=>{ state.q=e.target.value; render(); };
+
+document.getElementById("themebtn").onclick = ()=>{
+  const r = document.documentElement;
+  const cur = r.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark":"light");
+  r.setAttribute("data-theme", cur==="dark" ? "light":"dark");
+};
+
+renderStats(); renderChips(); render();
+</script>

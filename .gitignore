@@ -1,0 +1,20 @@
+# --- SECRETS: never commit ---
+.env
+
+# --- Local state / DB (not for the repo) ---
+reddit_agent/.state/
+
+# --- Raw Reddit corpus (large; Reddit ToS — do not redistribute) ---
+daily_data/
+subreddit_data/
+
+# --- Binaries / caches ---
+tools/*.exe
+tools/*.zip
+tools/ant_*/
+tools/ant.exe
+__pycache__/
+*.pyc
+
+# NOTE: docs/ (index.html + signals.json) IS committed — that's the published
+# dashboard snapshot. It contains your analysed digest data, so use a PRIVATE repo.

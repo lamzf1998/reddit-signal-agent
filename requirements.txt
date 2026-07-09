@@ -1,0 +1,11 @@
+# Core (Ollama backend + Telegram). Ollama itself is a separate install.
+requests>=2.31.0
+
+# Live collection via the Reddit API.
+praw>=7.7.0
+
+# Local dashboard server.
+flask>=3.0.0
+
+# Optional: only needed if you switch LLM_BACKEND=anthropic (Claude API).
+# anthropic>=0.116.0

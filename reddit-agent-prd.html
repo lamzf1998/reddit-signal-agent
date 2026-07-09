@@ -1,0 +1,578 @@
+<title>PRD — Reddit Signal Agent</title>
+<style>
+  :root {
+    --bg: #e9ebef;
+    --surface: #f8f9fb;
+    --surface-2: #f0f2f5;
+    --ink: #14181d;
+    --muted: #5c6673;
+    --faint: #8a93a0;
+    --line: rgba(20, 24, 29, 0.12);
+    --line-strong: rgba(20, 24, 29, 0.22);
+    --sig: #b96a10;
+    --sig-soft: rgba(224, 138, 30, 0.14);
+    --fin: #0b7a5a;
+    --ai: #4a4dd4;
+    --gen: #c02f7d;
+    --good: #0b7a5a;
+    --warn: #b96a10;
+    --crit: #c23b3b;
+    --shadow: 0 1px 2px rgba(20,24,29,.05), 0 8px 24px rgba(20,24,29,.06);
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", "Segoe UI Mono", Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1015;
+      --surface: #151a21;
+      --surface-2: #1b2129;
+      --ink: #e7ebf0;
+      --muted: #97a1ad;
+      --faint: #6b7684;
+      --line: rgba(231, 235, 240, 0.12);
+      --line-strong: rgba(231, 235, 240, 0.22);
+      --sig: #f0a744;
+      --sig-soft: rgba(240, 167, 68, 0.13);
+      --fin: #34d3a2;
+      --ai: #8b8ef8;
+      --gen: #f472b6;
+      --good: #34d3a2;
+      --warn: #f0a744;
+      --crit: #f07171;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1015;
+    --surface: #151a21;
+    --surface-2: #1b2129;
+    --ink: #e7ebf0;
+    --muted: #97a1ad;
+    --faint: #6b7684;
+    --line: rgba(231, 235, 240, 0.12);
+    --line-strong: rgba(231, 235, 240, 0.22);
+    --sig: #f0a744;
+    --sig-soft: rgba(240, 167, 68, 0.13);
+    --fin: #34d3a2;
+    --ai: #8b8ef8;
+    --gen: #f472b6;
+    --good: #34d3a2;
+    --warn: #f0a744;
+    --crit: #f07171;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.4);
+  }
+  :root[data-theme="light"] {
+    --bg: #e9ebef;
+    --surface: #f8f9fb;
+    --surface-2: #f0f2f5;
+    --ink: #14181d;
+    --muted: #5c6673;
+    --faint: #8a93a0;
+    --line: rgba(20, 24, 29, 0.12);
+    --line-strong: rgba(20, 24, 29, 0.22);
+    --sig: #b96a10;
+    --sig-soft: rgba(224, 138, 30, 0.14);
+    --fin: #0b7a5a;
+    --ai: #4a4dd4;
+    --gen: #c02f7d;
+    --good: #0b7a5a;
+    --warn: #b96a10;
+    --crit: #c23b3b;
+    --shadow: 0 1px 2px rgba(20,24,29,.05), 0 8px 24px rgba(20,24,29,.06);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .page {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.6;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 0 28px 96px;
+  }
+
+  /* ---- log-rail eyebrow ---- */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sig);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 14px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px; height: 7px;
+    background: var(--sig);
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px var(--sig-soft);
+    flex: none;
+  }
+
+  h1, h2, h3 { font-family: var(--serif); font-weight: 600; text-wrap: balance; }
+  h1 { font-size: clamp(2.3rem, 5vw, 3.4rem); line-height: 1.04; letter-spacing: -0.015em; margin: 0 0 18px; }
+  h2 { font-size: clamp(1.55rem, 3vw, 2rem); line-height: 1.1; letter-spacing: -0.01em; margin: 0 0 8px; }
+  h3 { font-size: 1.16rem; margin: 0 0 6px; letter-spacing: -0.005em; }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  a { color: var(--sig); }
+
+  /* ---- header ---- */
+  header.hero {
+    border-bottom: 1px solid var(--line-strong);
+    padding: 72px 0 40px;
+    margin-bottom: 8px;
+  }
+  .metaline {
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    letter-spacing: 0.02em;
+    margin-top: 26px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  .metaline b { color: var(--ink); font-weight: 600; }
+  .lede { font-size: 1.22rem; color: var(--muted); max-width: 60ch; line-height: 1.5; }
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  /* ---- section rhythm ---- */
+  section { padding-top: 56px; }
+  .sec-num {
+    font-family: var(--mono); font-size: 12px; color: var(--faint);
+    letter-spacing: 0.1em;
+  }
+
+  /* ---- cards / surfaces ---- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+  }
+  .grid { display: grid; gap: 16px; margin-top: 22px; }
+
+  /* ---- vertical tracks ---- */
+  .tracks { grid-template-columns: repeat(3, 1fr); }
+  .track {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--tc);
+    border-radius: 10px;
+    padding: 20px 20px 22px;
+    display: flex; flex-direction: column; gap: 14px;
+    box-shadow: var(--shadow);
+  }
+  .track.fin { --tc: var(--fin); }
+  .track.ai  { --tc: var(--ai); }
+  .track.gen { --tc: var(--gen); }
+  .track .tag {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--tc); font-weight: 600;
+  }
+  .track h3 { font-size: 1.05rem; margin: 0; }
+  .field { border-top: 1px solid var(--line); padding-top: 12px; }
+  .field .k {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--faint); display: block; margin-bottom: 4px;
+  }
+  .field .v { font-size: 14.5px; color: var(--ink); }
+
+  /* ---- pipeline ---- */
+  .pipe {
+    display: flex; flex-wrap: wrap; align-items: stretch; gap: 0;
+    margin-top: 22px;
+    border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+  .stage {
+    flex: 1 1 0; min-width: 150px;
+    padding: 18px 16px;
+    border-right: 1px solid var(--line);
+    position: relative;
+  }
+  .stage:last-child { border-right: none; }
+  .stage .idx { font-family: var(--mono); font-size: 11px; color: var(--sig); letter-spacing: 0.1em; }
+  .stage .nm { font-family: var(--serif); font-size: 1.05rem; margin: 4px 0 6px; display: block; }
+  .stage .ds { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+
+  /* ---- numbered slices ---- */
+  .slices { counter-reset: slice; display: flex; flex-direction: column; gap: 14px; margin-top: 22px; }
+  .slice {
+    display: grid; grid-template-columns: 56px 1fr; gap: 20px;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 10px; padding: 20px 22px; box-shadow: var(--shadow);
+  }
+  .slice .no {
+    counter-increment: slice;
+    font-family: var(--mono); font-size: 13px; color: var(--sig);
+    border-right: 1px solid var(--line);
+  }
+  .slice .no::before { content: "V1." counter(slice); }
+  .slice .ship { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-top: 8px; display: block; }
+
+  /* ---- schema blocks ---- */
+  .schema {
+    font-family: var(--mono); font-size: 13px; line-height: 1.7;
+    background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 10px; padding: 18px 20px; overflow-x: auto;
+  }
+  .schema .obj { color: var(--sig); font-weight: 600; }
+  .schema .fk { color: var(--ink); }
+  .schema .ty { color: var(--muted); }
+  .schema .cm { color: var(--faint); font-style: italic; }
+  .schema-title { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin: 20px 0 8px; }
+
+  /* ---- risks ---- */
+  .risk {
+    display: grid; grid-template-columns: 130px 1fr; gap: 18px;
+    padding: 16px 0; border-top: 1px solid var(--line);
+  }
+  .risk:first-child { border-top: none; }
+  .sev {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em;
+    text-transform: uppercase; font-weight: 600; align-self: start;
+    padding: 3px 9px; border-radius: 999px; white-space: nowrap; display: inline-block;
+  }
+  .sev.crit { color: var(--crit); background: color-mix(in srgb, var(--crit) 14%, transparent); }
+  .sev.warn { color: var(--warn); background: var(--sig-soft); }
+  .sev.info { color: var(--muted); background: var(--surface-2); }
+  .risk h3 { font-family: var(--sans); font-size: 15px; font-weight: 650; margin: 0 0 3px; }
+  .risk p { font-size: 14px; color: var(--muted); margin: 0; }
+
+  /* ---- decision cards ---- */
+  .decisions { grid-template-columns: 1fr 1fr; }
+  .decision { border-left: 3px solid var(--sig); padding: 4px 0 4px 16px; }
+  .decision h3 { font-family: var(--sans); font-size: 14.5px; font-weight: 650; margin: 0 0 4px; }
+  .decision p { font-size: 13.5px; color: var(--muted); margin: 0; }
+
+  /* ---- collection compare ---- */
+  .compare { grid-template-columns: 1fr 1fr; }
+  .tool { padding: 22px 24px; }
+  .tool .badge { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sig); }
+  .tool ul { margin: 12px 0 0; padding-left: 18px; }
+  .tool li { font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+  .tool li b { color: var(--ink); font-weight: 600; }
+
+  /* ---- scope ---- */
+  .scope { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+  .scope div {
+    font-size: 15px; padding-left: 26px; position: relative; color: var(--muted);
+  }
+  .scope div::before {
+    content: "✕"; position: absolute; left: 0; top: 0;
+    color: var(--crit); font-family: var(--mono); font-weight: 700;
+  }
+  .scope div b { color: var(--ink); font-weight: 600; }
+
+  .out-note {
+    font-family: var(--mono); font-size: 12.5px; color: var(--muted);
+    background: var(--sig-soft); border-left: 3px solid var(--sig);
+    padding: 12px 16px; border-radius: 0 8px 8px 0; margin-top: 20px; line-height: 1.55;
+  }
+
+  ul.clean { padding-left: 20px; }
+  ul.clean li { margin-bottom: 8px; max-width: 66ch; }
+  ul.clean li b { font-weight: 650; }
+
+  .metrics { grid-template-columns: repeat(3, 1fr); }
+  .metric { text-align: left; }
+  .metric .big { font-family: var(--serif); font-size: 2rem; color: var(--sig); line-height: 1; }
+  .metric .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin-top: 8px; }
+  .metric p { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+
+  footer { margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 12px; color: var(--faint); }
+
+  @media (max-width: 760px) {
+    .tracks, .decisions, .compare, .metrics { grid-template-columns: 1fr; }
+    .stage { border-right: none; border-bottom: 1px solid var(--line); }
+    .stage:last-child { border-bottom: none; }
+    .risk { grid-template-columns: 1fr; gap: 6px; }
+  }
+</style>
+
+<div class="page">
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">Product Requirements · Draft</div>
+    <h1>Reddit Signal Agent</h1>
+    <p class="lede">A precision-favoring intelligence agent that watches three noisy Reddit channels and returns <strong>only the signal</strong>: AI-related financial opinion, new AI tools, and new generation workflows &amp; models — each filtered, enriched, and extracted into a structured digest.</p>
+    <div class="metaline">
+      <span><b>Owner</b> lamzf1998</span>
+      <span><b>Date</b> 2026-07-08</span>
+      <span><b>Status</b> Draft v0.1</span>
+      <span><b>Milestone</b> V1 scope</span>
+    </div>
+  </header>
+
+  <!-- GOAL -->
+  <section id="goal">
+    <div class="eyebrow">01 — Goal</div>
+    <h2>What this is for</h2>
+    <p>Three subreddit families produce far more volume than a person can read. Generic monitoring returns raw firehoses; the value here is <strong>relevance filtering plus structured extraction</strong> — three parallel pipelines that share infrastructure but each answer a different question and emit a different record.</p>
+    <p>The agent <em>observes and reports</em>. It surfaces what people are building and saying, attributed to source. It does not advise, rank securities, or synthesize recommendations.</p>
+  </section>
+
+  <!-- VERTICALS -->
+  <section id="verticals">
+    <div class="eyebrow">02 — The three channels</div>
+    <h2>Parallel tracks, one machine</h2>
+    <p>Each track has its own <em>relevance filter</em> (what to keep) and <em>extraction target</em> (what to pull out), over a shared <em>capture depth</em>: all three pull top-level comments, because the community's <strong>reception</strong> of a tool or opinion is signal in every channel — often more than the post itself.</p>
+    <div class="grid tracks">
+
+      <div class="track fin">
+        <span class="tag">◆ Financial</span>
+        <h3>AI-related financial opinion</h3>
+        <div class="field"><span class="k">Keep if</span><span class="v">Post or thread is <b>about AI</b> — AI stocks (NVDA, semis), AI capex &amp; datacenter buildout, "AI bubble" discourse, AI-driven earnings moves.</span></div>
+        <div class="field"><span class="k">Extract</span><span class="v">Sentiment, key opinions &amp; the reasoning behind them, financial implication — all attributed, never as advice.</span></div>
+        <div class="field"><span class="k">Depth</span><span class="v">Posts <b>+ top-level comments</b> (opinions live here).</span></div>
+        <div class="field"><span class="k">Subs</span><span class="v">wallstreetbets, stocks, investing, options</span></div>
+      </div>
+
+      <div class="track ai">
+        <span class="tag">◆ AI</span>
+        <h3>New tools &amp; updates</h3>
+        <div class="field"><span class="k">Keep if</span><span class="v">Post <b>announces or updates a tool</b>, framework, model, or notable release.</span></div>
+        <div class="field"><span class="k">Extract</span><span class="v">Tool name, category, what it does, source link (summarized from repo / paper / model card), <b>+ community reception &amp; notable opinions</b> from comments.</span></div>
+        <div class="field"><span class="k">Depth</span><span class="v">Posts <b>+ top-level comments</b> (for reception) + link.</span></div>
+        <div class="field"><span class="k">Subs</span><span class="v">LocalLLaMA, MachineLearning, artificial, singularity, ArtificialInteligence, technology</span></div>
+      </div>
+
+      <div class="track gen">
+        <span class="tag">◆ Content Gen</span>
+        <h3>Workflows, guides, models</h3>
+        <div class="field"><span class="k">Keep if</span><span class="v">Post is a <b>new workflow, prompt guide, or new model</b> — not just a showcase image.</span></div>
+        <div class="field"><span class="k">Extract</span><span class="v">Artifact type, name, base model, link (summarized from Civitai / GitHub / workflow JSON), <b>+ community reception &amp; notable opinions</b> from comments.</span></div>
+        <div class="field"><span class="k">Depth</span><span class="v">Posts <b>+ top-level comments</b> (for reception) + link.</span></div>
+        <div class="field"><span class="k">Subs</span><span class="v">StableDiffusion, comfyui, generativeAI, PromptEngineering</span></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PIPELINE -->
+  <section id="pipeline">
+    <div class="eyebrow">03 — Architecture</div>
+    <h2>Shared pipeline</h2>
+    <p>Every track runs the same five stages; only the filter model, extraction schema, and capture depth differ. Full off-Reddit source fetching is <strong>in scope</strong> — the enrich stage crawls and summarizes the linked repo, model card, or paper.</p>
+    <div class="pipe">
+      <div class="stage"><span class="idx">01</span><span class="nm">Ingest</span><span class="ds">Poll <code>new</code> per sub via PRAW; dedup against the seen-registry. Arctic-shift for backfill &amp; comment history.</span></div>
+      <div class="stage"><span class="idx">02</span><span class="nm">Filter</span><span class="ds">Per-track relevance classifier with a confidence threshold. Precision over recall — a noisy digest is a dead digest.</span></div>
+      <div class="stage"><span class="idx">03</span><span class="nm">Enrich</span><span class="ds">Fetch &amp; summarize the off-Reddit source, and pull top-level comments across all tracks to read community reception.</span></div>
+      <div class="stage"><span class="idx">04</span><span class="nm">Extract</span><span class="ds">Track-specific structured extraction into the record schema. Novelty check vs. seen entities.</span></div>
+      <div class="stage"><span class="idx">05</span><span class="nm">Digest</span><span class="ds">Group, order, and render the scheduled digest of net-new, relevant, attributed items.</span></div>
+    </div>
+  </section>
+
+  <!-- SLICES -->
+  <section id="slices">
+    <div class="eyebrow">04 — Delivery</div>
+    <h2>Three vertical slices</h2>
+    <p>Pipeline-first: prove the whole machine end-to-end on the simplest extraction, then replicate the working shape to the harder tracks. Each slice ships a usable digest.</p>
+    <div class="slices">
+      <div class="slice">
+        <div class="no"></div>
+        <div>
+          <h3>AI tools — full pipeline on the easy case</h3>
+          <p>Ingest → filter → enrich → extract → digest, end-to-end, on the AI track alone — including comment capture and reception (proving that path from day one). Extraction is otherwise the simplest (tool name + link + summary), so this de-risks the shared machinery, the classifier threshold, and the source-fetching enrich stage before scale.</p>
+          <span class="ship">Ships · a "new AI tools + community reception" digest + seen-registry</span>
+        </div>
+      </div>
+      <div class="slice">
+        <div class="no"></div>
+        <div>
+          <h3>Content generation — replicate + media reality</h3>
+          <p>Reuse the pipeline for workflows / guides / models. New surface area: Civitai &amp; workflow-JSON enrichment, heavy off-Reddit media, and NSFW prevalence that forces an explicit handling decision.</p>
+          <span class="ship">Ships · a "new workflows &amp; models" digest</span>
+        </div>
+      </div>
+      <div class="slice">
+        <div class="no"></div>
+        <div>
+          <h3>Financial — the hard track last</h3>
+          <p>Adds the two hardest pieces: cross-domain "is this about AI?" relevance, and comment-thread opinion + sentiment extraction (sarcasm, emoji, slang). Built last so it lands on proven infrastructure.</p>
+          <span class="ship">Ships · an "AI &amp; the market" opinion digest</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DATA MODEL -->
+  <section id="data-model">
+    <div class="eyebrow">05 — Data model</div>
+    <h2>What we store</h2>
+    <p>A normalized <code>Post</code> is the spine; each track writes its own extraction record referencing it. The <code>SeenEntity</code> registry is what makes "new" mean new — without it the agent re-surfaces the same tool forever. Capture handles mutation: posts get edited, deleted, or removed after first sight.</p>
+
+    <div class="schema-title">// spine — captured for every kept item</div>
+    <div class="schema">
+<span class="obj">Post</span> {
+  <span class="fk">id</span>            <span class="ty">string       // reddit fullname (t3_…)</span>
+  <span class="fk">subreddit</span>     <span class="ty">string</span>
+  <span class="fk">track</span>         <span class="ty">enum(financial | ai | content_gen)</span>
+  <span class="fk">title</span>         <span class="ty">string</span>
+  <span class="fk">body</span>          <span class="ty">text</span>
+  <span class="fk">author</span>        <span class="ty">string</span>
+  <span class="fk">url</span>           <span class="ty">string       // off-reddit link, if any</span>
+  <span class="fk">score</span>         <span class="ty">int          // fuzzed by reddit — treat as estimate</span>
+  <span class="fk">created_utc</span>   <span class="ty">timestamp</span>
+  <span class="fk">first_seen</span>    <span class="ty">timestamp    // when WE captured it</span>
+  <span class="fk">last_polled</span>   <span class="ty">timestamp</span>
+  <span class="fk">status</span>        <span class="ty">enum(live | edited | deleted | removed)</span>
+  <span class="fk">nsfw</span>          <span class="ty">bool</span>
+  <span class="fk">relevance</span>     <span class="ty">float        // classifier confidence 0–1</span>
+}
+    </div>
+
+    <div class="schema-title">// financial track — references Post.id</div>
+    <div class="schema">
+<span class="obj">FinancialSignal</span> {
+  <span class="fk">post_id</span>       <span class="ty">→ Post.id</span>
+  <span class="fk">tickers</span>       <span class="ty">string[]     // extracted, disambiguated</span>
+  <span class="fk">ai_angle</span>      <span class="ty">string       // why this is AI-related</span>
+  <span class="fk">sentiment</span>     <span class="ty">enum(bullish | bearish | mixed | neutral)</span>
+  <span class="fk">opinions</span>      <span class="ty">Opinion[]    // {quote, author, reasoning}</span>
+  <span class="fk">implication</span>   <span class="ty">text         // attributed, not advice</span>
+}
+    </div>
+
+    <div class="schema-title">// ai + content-gen tracks — references Post.id</div>
+    <div class="schema">
+<span class="obj">ArtifactRecord</span> {
+  <span class="fk">post_id</span>       <span class="ty">→ Post.id</span>
+  <span class="fk">kind</span>          <span class="ty">enum(tool | model | workflow | prompt_guide)</span>
+  <span class="fk">name</span>          <span class="ty">string       // canonical, deduped</span>
+  <span class="fk">base_model</span>    <span class="ty">string       // content-gen only, nullable</span>
+  <span class="fk">summary</span>       <span class="ty">text         // from fetched source</span>
+  <span class="fk">source_url</span>    <span class="ty">string       // github / hf / civitai / arxiv</span>
+  <span class="fk">source_type</span>   <span class="ty">enum(repo | model_card | paper | other)</span>
+  <span class="fk">reception</span>     <span class="ty">enum(positive | mixed | negative | neutral)</span>
+  <span class="fk">opinions</span>      <span class="ty">Opinion[]    // notable praise/criticism from comments</span>
+}
+    </div>
+
+    <div class="schema-title">// novelty memory — the thing that makes "new" work</div>
+    <div class="schema">
+<span class="obj">SeenEntity</span> {
+  <span class="fk">key</span>           <span class="ty">string       // normalized name</span>
+  <span class="fk">kind</span>          <span class="ty">enum(tool | model | workflow)</span>
+  <span class="fk">first_seen</span>    <span class="ty">timestamp</span>
+  <span class="fk">seen_count</span>    <span class="ty">int          // repost pressure</span>
+}
+    </div>
+  </section>
+
+  <!-- COLLECTION -->
+  <section id="collection">
+    <div class="eyebrow">06 — Data collection</div>
+    <h2>PRAW + Arctic-shift</h2>
+    <p>Two tools, two jobs. PRAW handles live polling against the official API; Arctic-shift covers the history PRAW structurally cannot reach.</p>
+    <div class="grid compare">
+      <div class="card tool">
+        <span class="badge">PRAW · live</span>
+        <h3>Official API wrapper</h3>
+        <ul>
+          <li><b>Role:</b> poll <code>new</code> per sub on a schedule; fetch top-level comments across all tracks; re-poll to catch edits/removals.</li>
+          <li><b>Watch:</b> OAuth registration, rate limits, User-Agent &amp; Data API Terms compliance.</li>
+          <li><b>Limit:</b> ~1,000-item listing ceiling — cannot page deep into history.</li>
+        </ul>
+      </div>
+      <div class="card tool">
+        <span class="badge">Arctic-shift · history</span>
+        <h3>Pushshift successor</h3>
+        <ul>
+          <li><b>Role:</b> historical backfill &amp; full-text search past the live ceiling; cheap bulk comment history across all tracks.</li>
+          <li><b>Why:</b> makes limited backfill feasible again — the 1,000-cap no longer fully blocks it.</li>
+          <li><b>Watch:</b> archive freshness/lag and its own usage terms; treat as complement, not replacement.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- OUT OF SCOPE -->
+  <section id="scope">
+    <div class="eyebrow">07 — Out of scope</div>
+    <h2>What V1 will not do</h2>
+    <div class="scope">
+      <div><b>Trade signals or financial advice.</b> The agent reports attributed opinion and sentiment only. It never generates buy/sell recommendations or ranks securities — this keeps it clear of investment-advice and market-manipulation exposure.</div>
+    </div>
+    <div class="out-note">NOTE — You left two items <b>in</b> scope that usually get cut. <b>Historical backfill</b> stays in via Arctic-shift (feasible, but bounded by archive lag). <b>NSFW handling</b> stays in but is undecided: V1 defaults to <b>flag + capture</b>, pending your call on store-vs-exclude (matters most for StableDiffusion). See open questions.</div>
+  </section>
+
+  <!-- RISKS -->
+  <section id="risks">
+    <div class="eyebrow">08 — Risks &amp; constraints</div>
+    <h2>Known hazards</h2>
+    <div class="card">
+      <div class="risk">
+        <span class="sev crit">Legal</span>
+        <div><h3>API terms, cost &amp; data licensing</h3><p>Reddit gates the API behind OAuth + rate limits, charges high-volume use, and actively pursues unauthorized scraping/storage. Storing and redistributing user content has contractual limits. Verify current pricing &amp; Data API Terms before build.</p></div>
+      </div>
+      <div class="risk">
+        <span class="sev crit">Accuracy</span>
+        <div><h3>Relevance is a fuzzy classifier ×3</h3><p>"Is this finance post about AI?" is a semantic judgment, not a keyword match — and the hardest of the three. Needs a tunable confidence threshold and, eventually, a labeled feedback set to measure precision/recall.</p></div>
+      </div>
+      <div class="risk">
+        <span class="sev warn">Accuracy</span>
+        <div><h3>Sarcasm & slang break generic sentiment</h3><p>Sentiment now runs on every track's comments. Off-the-shelf models score wallstreetbets backwards; emoji carry signal (🚀 💎 🙌); AI/gen reception hides behind jargon and hype. Each track needs domain-aware sentiment, not a generic polarity score.</p></div>
+      </div>
+      <div class="risk">
+        <span class="sev warn">Data</span>
+        <div><h3>Content mutates &amp; disappears</h3><p>Posts get edited, author-deleted, or mod-removed after first sight. Re-polling captures history but multiplies cost; retaining deleted content carries PII/GDPR implications.</p></div>
+      </div>
+      <div class="risk">
+        <span class="sev warn">Data</span>
+        <div><h3>Novelty &amp; repost pressure</h3><p>Popular tools/models are posted repeatedly. Without the SeenEntity registry the digest degrades into re-runs. Entity names are ambiguous and churn weekly — a static keyword list rots fast.</p></div>
+      </div>
+      <div class="risk">
+        <span class="sev info">Data</span>
+        <div><h3>Scores are fuzzed; listings are ranked</h3><p>Reddit injects vote noise, so thresholds on score are approximate. <code>new</code> vs <code>hot</code> vs <code>rising</code> each define a different perceivable reality — polling <code>new</code> is the neutral choice.</p></div>
+      </div>
+      <div class="risk">
+        <span class="sev info">Cost</span>
+        <div><h3>Source-fetching enrich stage</h3><p>Crawling GitHub/HF/Civitai/arXiv adds real failure modes: dead links, rate limits, paywalls, and parse variance across source types. Needs graceful degradation to "link only."</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPEN QUESTIONS -->
+  <section id="open">
+    <div class="eyebrow">09 — Open questions</div>
+    <h2>Decisions still needed</h2>
+    <div class="grid decisions">
+      <div class="decision"><h3>Cadence &amp; latency</h3><p>How often does the digest run — hourly, daily, weekly? Drives polling frequency and cost directly.</p></div>
+      <div class="decision"><h3>Output surface</h3><p>Where does the digest land — email, Slack, a web dashboard, or a database others query?</p></div>
+      <div class="decision"><h3>NSFW policy</h3><p>Flag-and-exclude, or flag-and-store? V1 defaults to capture; needs your call for content-gen.</p></div>
+      <div class="decision"><h3>Deployment reality</h3><p>Personal tool, hosted service, or commercial product? This sets how strict the ToS/licensing posture must be.</p></div>
+      <div class="decision"><h3>Classifier approach</h3><p>LLM-based relevance vs. lightweight embeddings + threshold — cost vs. accuracy tradeoff per track.</p></div>
+      <div class="decision"><h3>Deleted-content retention</h3><p>Do we keep what a user later deletes? A legal question disguised as a schema flag.</p></div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="metrics">
+    <div class="eyebrow">10 — Success</div>
+    <h2>How we'll know it works</h2>
+    <div class="grid metrics">
+      <div class="card metric"><div class="big">Precision</div><div class="lbl">Primary</div><p>Share of digest items a reader judges genuinely relevant. Target this over recall — trust dies on noise.</p></div>
+      <div class="card metric"><div class="big">Novelty</div><div class="lbl">Freshness</div><p>Share of digest items that are net-new, not reposts of already-seen entities.</p></div>
+      <div class="card metric"><div class="big">Coverage</div><div class="lbl">Secondary</div><p>Share of genuinely notable items the agent didn't miss — measured against spot-checks.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    reddit-signal-agent · PRD draft v0.1 · 2026-07-08 · observe &amp; report, never advise
+  </footer>
+
+</div>
+</div>

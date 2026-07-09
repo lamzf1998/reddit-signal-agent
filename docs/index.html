@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reddit Signal Agent</title>
+<style>
+  :root{--bg:#e9ebef;--surface:#f8f9fb;--surface-2:#f0f2f5;--ink:#14181d;--muted:#5c6673;--faint:#8a93a0;--line:rgba(20,24,29,.12);--line-strong:rgba(20,24,29,.22);--sig:#b96a10;--sig-soft:rgba(224,138,30,.14);--fin:#0b7a5a;--ai:#4a4dd4;--gen:#c02f7d;--good:#0b7a5a;--warn:#b96a10;--crit:#c23b3b;--shadow:0 1px 2px rgba(20,24,29,.05),0 8px 24px rgba(20,24,29,.06);--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--mono:ui-monospace,"Cascadia Code","Segoe UI Mono",Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  @media (prefers-color-scheme:dark){:root{--bg:#0d1015;--surface:#151a21;--surface-2:#1b2129;--ink:#e7ebf0;--muted:#97a1ad;--faint:#6b7684;--line:rgba(231,235,240,.12);--line-strong:rgba(231,235,240,.22);--sig:#f0a744;--sig-soft:rgba(240,167,68,.13);--fin:#34d3a2;--ai:#8b8ef8;--gen:#f472b6;--good:#34d3a2;--warn:#f0a744;--crit:#f07171;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.4)}}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px 80px}
+  header{padding:36px 0 20px;border-bottom:1px solid var(--line-strong)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--sig);display:flex;align-items:center;gap:9px}
+  .eyebrow::before{content:"";width:7px;height:7px;background:var(--sig);border-radius:50%;box-shadow:0 0 0 3px var(--sig-soft)}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(1.9rem,4.5vw,2.7rem);letter-spacing:-.015em;margin:12px 0 4px}
+  .sub{color:var(--muted);margin:0}
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:22px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
+  .stat .n{font-family:var(--serif);font-size:1.6rem;line-height:1;font-variant-numeric:tabular-nums}
+  .stat .l{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-top:6px}
+  .controls{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:13px 0;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+  .chipgroup{display:inline-flex;gap:6px}
+  .vsep{width:1px;align-self:stretch;background:var(--line-strong);margin:2px 2px}
+  .chip{font-family:var(--mono);font-size:12px;padding:6px 12px;border:1px solid var(--line-strong);border-radius:999px;background:transparent;color:var(--muted);cursor:pointer}
+  .chip[aria-pressed="true"]{background:var(--sig);border-color:var(--sig);color:#fff;font-weight:600}
+  .chip.vt[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+  @media (prefers-color-scheme:dark){.chip[aria-pressed="true"]{color:#14181d}.chip.vt[aria-pressed="true"]{color:var(--bg)}}
+  .search{flex:1;min-width:150px;font-size:14px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink)}
+  .search:focus{outline:2px solid var(--sig);outline-offset:1px}
+  .count{font-family:var(--mono);font-size:12px;color:var(--faint);white-space:nowrap}
+  .updated{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:8px}
+  .feed{display:flex;flex-direction:column;gap:13px;margin-top:16px}
+  .group-h{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:16px 0 2px;display:flex;align-items:center;gap:8px}
+  .group-h .dot{width:8px;height:8px;border-radius:50%}
+  .card{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--tc);border-radius:10px;padding:15px 17px;box-shadow:var(--shadow)}
+  .card.ai{--tc:var(--ai)}.card.content_gen{--tc:var(--gen)}.card.financial{--tc:var(--fin)}
+  .row1{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:5px}
+  .sr{font-family:var(--mono);font-size:12px;color:var(--tc);font-weight:600}
+  .badge{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+  .badge.new{color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent);border-color:transparent;font-weight:700}
+  .badge.brk{color:var(--crit);background:color-mix(in srgb,var(--crit) 13%,transparent);border-color:transparent;font-weight:700}
+  .badge.pref{color:var(--sig);background:var(--sig-soft);border-color:transparent}
+  .badge.norej{color:var(--faint)}
+  .title{font-family:var(--serif);font-size:1.15rem;font-weight:600;margin:2px 0 5px;text-wrap:balance}
+  .summary{font-size:14px;margin:0 0 9px}
+  .recept{font-size:13px;color:var(--muted);margin:0 0 9px}
+  .pill{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;margin-right:6px;white-space:nowrap}
+  .pos{color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent)}
+  .neg{color:var(--crit);background:color-mix(in srgb,var(--crit) 14%,transparent)}
+  .mix{color:var(--warn);background:var(--sig-soft)}.neu{color:var(--muted);background:var(--surface-2)}
+  .tickers{font-family:var(--mono);font-size:12px;color:var(--fin);margin:0 0 8px}
+  .foot{display:flex;gap:14px;font-family:var(--mono);font-size:11.5px;align-items:center;flex-wrap:wrap;padding-top:9px;border-top:1px solid var(--line)}
+  .foot a{color:var(--sig);text-decoration:none}.foot a:hover{text-decoration:underline}.foot .date{color:var(--faint);margin-left:auto}
+  .empty{text-align:center;color:var(--faint);font-family:var(--mono);font-size:13px;padding:40px;border:1px dashed var(--line-strong);border-radius:10px}
+  @media (max-width:680px){.stats{grid-template-columns:repeat(2,1fr)}.controls{position:static}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Static snapshot · GitHub Pages</div>
+    <h1>Reddit Signal Agent</h1>
+    <p class="sub">Every post the agent has analysed, newest first. Sent items are 🆕 NEW in Telegram.</p>
+    <div class="stats" id="stats"></div>
+    <div class="updated" id="updated"></div>
+  </header>
+  <div class="controls">
+    <div class="chipgroup" id="trackchips">
+      <button class="chip" data-t="all" aria-pressed="true">All</button>
+      <button class="chip" data-t="ai" aria-pressed="false">AI</button>
+      <button class="chip" data-t="content_gen" aria-pressed="false">Content-gen</button>
+      <button class="chip" data-t="financial" aria-pressed="false">Financial</button>
+    </div>
+    <span class="vsep"></span>
+    <div class="chipgroup" id="viewtabs">
+      <button class="chip vt" data-v="sent" aria-pressed="true">Sent</button>
+      <button class="chip vt" data-v="hidden" aria-pressed="false">Hidden</button>
+      <button class="chip vt" data-v="all" aria-pressed="false">All</button>
+    </div>
+    <input class="search" id="search" placeholder="Search…" autocomplete="off">
+    <span class="count" id="count"></span>
+  </div>
+  <div class="feed" id="feed"></div>
+</div>
+<script>
+const TRACKS={ai:{label:"AI — tools & news",dot:"var(--ai)"},content_gen:{label:"Content generation",dot:"var(--gen)"},financial:{label:"Financial",dot:"var(--fin)"}};
+const RECEPT={positive:["pos","👍 positive"],negative:["neg","👎 negative"],mixed:["mix","🤷 mixed"],neutral:["neu","😐 neutral"],unknown:["neu","❔ unknown"]};
+const SENT={bullish:["pos","🟢 bullish"],bearish:["neg","🔴 bearish"],mixed:["mix","🟡 mixed"],neutral:["neu","⚪ neutral"]};
+const state={track:"all",view:"sent",q:""};
+let ALL=[],THRESH=0.6;
+function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+async function load(){
+  try{
+    const data=await fetch("./signals.json?"+Date.now()).then(r=>r.json());
+    ALL=data.signals||[];
+    if(typeof data.relevance_threshold==="number")THRESH=data.relevance_threshold;
+    document.getElementById("updated").textContent="updated "+(data.generated_at||"").replace("T"," ").replace("+00:00"," UTC");
+  }catch(e){ document.getElementById("feed").innerHTML=`<div class="empty">Could not load signals.json — has the agent pushed a snapshot yet?</div>`; return; }
+  renderStats(); render();
+}
+function renderStats(){
+  const sent=ALL.filter(x=>x.sent);
+  const byT=t=>sent.filter(x=>x.track===t).length;
+  document.getElementById("stats").innerHTML=[
+    ["Analysed",ALL.length],["Sent",sent.length],["AI",byT("ai")],["Content-gen",byT("content_gen")],["Financial",byT("financial")],
+  ].map(([l,n])=>`<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+}
+function matches(it){
+  if(state.track!=="all"&&it.track!==state.track)return false;
+  if(state.view==="sent"&&!it.sent)return false;
+  if(state.view==="hidden"&&it.sent)return false;
+  if(state.q){const x=it.extraction||{};const hay=(it.title+" "+it.subreddit+" "+(x.name||"")+" "+(x.one_liner||"")+" "+(x.ai_angle||"")+" "+((x.tickers||[]).join(" "))).toLowerCase();if(!hay.includes(state.q.toLowerCase()))return false;}
+  return true;
+}
+function hideReason(it){
+  if(!it.relevant)return "filtered: noise";
+  if(it.confidence<THRESH)return `filtered: low confidence (${(it.confidence||0).toFixed(2)})`;
+  if(!it.matches_prefs)return "filtered: off-interest";
+  return "filtered: already seen";
+}
+function card(it){
+  const x=it.extraction||{},fin=it.track==="financial";
+  const title=fin?it.title:(x.name||it.title);
+  const pill=fin?(SENT[x.sentiment]||SENT.neutral):(RECEPT[x.reception]||RECEPT.unknown);
+  const badges=[
+    it.sent?`<span class="badge new">🆕 new</span>`:`<span class="badge norej">${esc(hideReason(it))}</span>`,
+    x.importance==="breaking"?`<span class="badge brk">breaking</span>`:"",
+    !fin&&x.kind?`<span class="badge">${esc(x.kind)}</span>`:"",
+    it.matches_prefs?`<span class="badge pref">★ interest</span>`:"",
+  ].join("");
+  let body;
+  if(fin){
+    const ops=(x.key_opinions||[]).slice(0,4).map(o=>`<div>- ${esc(o)}</div>`).join("");
+    body=`<p class="summary">${esc(x.ai_angle||"")}</p>${x.tickers&&x.tickers.length?`<div class="tickers">${x.tickers.map(t=>"$"+esc(t)).join("  ")}</div>`:""}<p class="recept"><span class="pill ${pill[0]}">${pill[1]}</span></p><div class="recept">${ops}${x.implication?`<div>- <b>Implication:</b> ${esc(x.implication)}</div>`:""}</div>`;
+  }else{
+    body=`<p class="summary">${esc(x.one_liner||"")}</p><p class="recept"><span class="pill ${pill[0]}">${pill[1]}</span>${esc(x.reception_summary||"")}</p>`;
+  }
+  const src=it.source_url?`<a href="${esc(it.source_url)}" target="_blank" rel="noopener">source ↗</a>`:"";
+  return `<article class="card ${it.track}"><div class="row1"><span class="sr">r/${esc(it.subreddit)}</span>${badges}</div><div class="title">${esc(title)}</div>${body}<div class="foot">${src}<a href="${esc(it.permalink)}" target="_blank" rel="noopener">thread ↗</a><span class="date">${esc(it.analysed_at||"").slice(0,16).replace("T"," ")}</span></div></article>`;
+}
+function render(){
+  const shown=ALL.filter(matches);
+  const feed=document.getElementById("feed");
+  if(!shown.length){feed.innerHTML=`<div class="empty">Nothing matches these filters.</div>`;}
+  else{let html="";for(const tk of Object.keys(TRACKS)){const items=shown.filter(x=>x.track===tk);if(!items.length)continue;html+=`<div class="group-h"><span class="dot" style="background:${TRACKS[tk].dot}"></span>${esc(TRACKS[tk].label)} · ${items.length}</div>`+items.map(card).join("");}feed.innerHTML=html;}
+  document.getElementById("count").textContent=`${shown.length} shown`;
+}
+document.querySelectorAll("#trackchips .chip").forEach(b=>b.onclick=()=>{document.querySelectorAll("#trackchips .chip").forEach(x=>x.setAttribute("aria-pressed",x===b));state.track=b.dataset.t;render();});
+document.querySelectorAll("#viewtabs .chip").forEach(b=>b.onclick=()=>{document.querySelectorAll("#viewtabs .chip").forEach(x=>x.setAttribute("aria-pressed",x===b));state.view=b.dataset.v;render();});
+document.getElementById("search").oninput=e=>{state.q=e.target.value;render();};
+load();
+setInterval(load,5*60*1000);
+</script>
+</body>
+</html>
