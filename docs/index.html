@@ -53,7 +53,8 @@
   .badge{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
   .badge.new{color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent);border-color:transparent;font-weight:700}
   .badge.brk{color:var(--crit);background:color-mix(in srgb,var(--crit) 13%,transparent);border-color:transparent;font-weight:700}
-  .badge.pref{color:var(--sig);background:var(--sig-soft);border-color:transparent}
+  .badge.pref{color:var(--sig);background:var(--sig-soft);border-color:transparent;display:inline-flex;align-items:center;gap:4px}
+  .salute{height:15px;width:auto;vertical-align:middle;border-radius:3px}
   .badge.norej{color:var(--faint)}
   .title{font-family:var(--serif);font-size:1.15rem;font-weight:600;margin:2px 0 5px;text-wrap:balance}
   .summary{font-size:14px;margin:0 0 9px}
@@ -167,7 +168,7 @@ function card(it){
     it.sent?`<span class="badge new">🆕 new</span>`:`<span class="badge norej">${esc(hideReason(it))}</span>`,
     x.importance==="breaking"?`<span class="badge brk">breaking</span>`:"",
     !fin&&x.kind?`<span class="badge">${esc(x.kind)}</span>`:"",
-    it.matches_prefs?`<span class="badge pref">★ interest</span>`:"",
+    it.matches_prefs?`<span class="badge pref"><img class="salute" src="salute.png" alt="">dictator is interested</span>`:"",
   ].join("");
   let body;
   if(fin){
