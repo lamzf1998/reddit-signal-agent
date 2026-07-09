@@ -166,6 +166,55 @@ def _extract_anthropic(system: str, prompt: str, schema: type[BaseModel]):
     return resp.parsed_output
 
 
+class _SubIdea(BaseModel):
+    name: str
+    track: Literal["ai", "content_gen", "financial"]
+    reason: str
+
+
+class _SubSuggestion(BaseModel):
+    reply: str
+    suggestions: list[_SubIdea]
+
+
+_SUGGEST_SYS = (
+    "You help configure 'Reddictator', a Reddit monitoring agent with three tracks: "
+    "ai (AI tools & news), content_gen (image/video generation models & workflows), "
+    "financial (markets & stocks). Given the user's interests and message, suggest real, "
+    "active subreddits (bare names, no 'r/') that match, each tagged with the best-fit "
+    "track and a one-line reason. Do NOT suggest subreddits already in their watch list. "
+    "Then ask ONE short follow-up question to uncover more of their interests. Keep 'reply' "
+    "to 1-2 sentences. Respond only with the requested JSON."
+)
+
+
+def suggest_subreddits(interests, watching, message="", history=None) -> dict:
+    """Chatbot: propose subreddits matching the user's interests, ask for more."""
+    lines = ["USER INTERESTS:"] + ([f"- {i}" for i in interests] or ["- (none yet)"])
+    lines.append("\nALREADY WATCHING: " + (", ".join(watching) or "(none)"))
+    lines.append(f"\nUSER MESSAGE: {message}" if message
+                 else "\nSuggest subreddits that match these interests.")
+    msgs = [{"role": "system", "content": _SUGGEST_SYS}]
+    for h in (history or [])[-6:]:
+        msgs.append({"role": h.get("role", "user"), "content": h.get("content", "")})
+    msgs.append({"role": "user", "content": "\n".join(lines)})
+
+    resp = requests.post(
+        f"{config.OLLAMA_HOST}/api/chat",
+        json={
+            "model": config.OLLAMA_MODEL,
+            "messages": msgs,
+            "format": _SubSuggestion.model_json_schema(),
+            "stream": False,
+            "keep_alive": config.OLLAMA_KEEP_ALIVE,
+            "options": {"temperature": 0.4},
+        },
+        timeout=180,
+    )
+    resp.raise_for_status()
+    return _SubSuggestion.model_validate_json(resp.json()["message"]["content"]).model_dump()
+
+
 def unload_model() -> bool:
     """Free the local model from the GPU (Ollama keep_alive=0). No-op for other backends."""
     if config.LLM_BACKEND != "ollama":

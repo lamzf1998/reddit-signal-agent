@@ -1,7 +1,4 @@
-# Your interests — plain English, one per line. The agent sends an item only if
-# it matches one of these OR the model judges it "breaking" (major release / very
-# high community interest). Lines starting with # are ignored.
-
+# Your interests — one per line. Managed from the dashboard.
 Financial news and opinion about AI stocks and data-center / datacenter stocks (e.g. NVDA and other AI chip makers, AI capex, hyperscaler datacenter buildout)
 New image and video generation models and their prompts — especially Z Image Turbo and Seedance 2.0
 AI news about Claude Code, coding agents, and agentic frameworks / tooling

@@ -93,7 +93,7 @@ ENRICH_MAX_CHARS = int(os.getenv("ENRICH_MAX_CHARS", "4000"))
 # Matched case-insensitively against the `<Sub>` in `<Sub>_posts.json`.
 # Financial subs are listed but absent from the current corpus; the track
 # stays dormant until their data appears.
-TRACK_SUBS = {
+_DEFAULT_TRACK_SUBS = {
     "ai": [
         "ArtificialInteligence", "Artificial", "OpenAI", "Singularity",
         "agi", "technology", "Futurology", "automation", "vibecoding",
@@ -106,6 +106,32 @@ TRACK_SUBS = {
         "stocks", "investing", "wallstreetbets", "StockMarket", "NVDA_Stock",
     ],
 }
+
+# Subreddit lists are editable via the local dashboard; persisted here.
+SUBS_FILE = PROJECT_ROOT / "config_subs.json"
+PREFERENCES_FILE = PROJECT_ROOT / "preferences.txt"
+
+
+def _load_track_subs() -> dict:
+    """Track→subreddits from config_subs.json, falling back to the defaults."""
+    if SUBS_FILE.exists():
+        try:
+            import json
+            data = json.loads(SUBS_FILE.read_text(encoding="utf-8"))
+            return {t: [s for s in data.get(t, _DEFAULT_TRACK_SUBS[t])] for t in _DEFAULT_TRACK_SUBS}
+        except Exception:
+            pass
+    return {t: list(v) for t, v in _DEFAULT_TRACK_SUBS.items()}
+
+
+TRACK_SUBS = _load_track_subs()
+
+
+def reload() -> None:
+    """Re-read the editable config files (preferences + subreddits) in-process."""
+    global USER_PREFERENCES, TRACK_SUBS
+    USER_PREFERENCES = _load_preferences()
+    TRACK_SUBS = _load_track_subs()
 
 # --- live self-collection --------------------------------------------------
 # Self-collect ALL tracks' subs before each run (fully real-time, self-contained).

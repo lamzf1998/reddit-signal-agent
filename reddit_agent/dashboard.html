@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Reddit Signal Agent — Live</title>
+<title>Reddictator — Live</title>
 <style>
   :root {
     --bg:#e9ebef; --surface:#f8f9fb; --surface-2:#f0f2f5; --ink:#14181d; --muted:#5c6673; --faint:#8a93a0;
@@ -21,12 +21,23 @@
     --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.4);
   }}
   *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1000px;margin:0 auto;padding:0 20px 80px}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 28px 80px}
   header{padding:36px 0 20px;border-bottom:1px solid var(--line-strong)}
   .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--sig);display:flex;align-items:center;gap:9px}
   .eyebrow::before{content:"";width:7px;height:7px;background:var(--sig);border-radius:50%;box-shadow:0 0 0 3px var(--sig-soft)}
   h1{font-family:var(--serif);font-weight:600;font-size:clamp(1.9rem,4.5vw,2.7rem);letter-spacing:-.015em;margin:12px 0 4px}
   .sub{color:var(--muted);margin:0}
+  .hrow{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}
+  .regime{margin:0;text-align:center;flex:none}
+  .regime img,.regime .fallback{width:78px;height:78px;border-radius:50%;object-fit:cover;border:2px solid var(--sig);box-shadow:var(--shadow);display:block;margin:0 auto}
+  .regime .fallback{display:none;align-items:center;justify-content:center;font-size:34px;background:var(--surface-2)}
+  .regime figcaption{font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--sig);margin-top:6px;font-weight:700;text-transform:uppercase}
+  @media (max-width:520px){.regime{display:none}}
+  .lead{display:flex;align-items:center;gap:15px;min-width:0}
+  .claw{width:46px;height:46px;flex:none;color:var(--sig);animation:spin 18s linear infinite}
+  .claw line{stroke:currentColor}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){.claw{animation:none}}
   .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:22px}
   .stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
   .stat .n{font-family:var(--serif);font-size:1.6rem;line-height:1;font-variant-numeric:tabular-nums}
@@ -43,18 +54,61 @@
   .search{flex:1;min-width:150px;font-size:14px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink)}
   .search:focus{outline:2px solid var(--sig);outline-offset:1px}
   .count{font-family:var(--mono);font-size:12px;color:var(--faint);white-space:nowrap}
+  .cfg{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+  .cfg summary{cursor:pointer;padding:12px 16px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .cfg[open] summary{border-bottom:1px solid var(--line);color:var(--sig)}
+  #cfgbody{padding:14px 16px}
+  .cfg-h{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:14px 0 6px}
+  .cfg-h.first{margin-top:0}
+  .cfg-prefs{margin:0;padding-left:18px}
+  .cfg-prefs li{font-size:13.5px;color:var(--ink);margin-bottom:3px}
+  .cfg-track{margin:0 0 6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .cfg-tname{font-family:var(--mono);font-size:11px;font-weight:700}
+  .cfg-sub{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+  .cfg-params{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+  .cfg-empty{font-size:13px;color:var(--faint);margin:0}
+  .watcher{position:fixed;right:18px;bottom:18px;z-index:9998;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:7px;transform:translateY(170%);transition:transform .6s cubic-bezier(.2,.9,.2,1)}
+  .watcher.left{right:auto;left:18px}
+  .watcher.show{transform:translateY(0)}
+  .watcher img{width:150px;height:auto;border-radius:10px;border:2px solid var(--sig);box-shadow:var(--shadow)}
+  .watcher span{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sig);background:var(--bg);padding:3px 9px;border-radius:6px;box-shadow:var(--shadow)}
+  @media (prefers-reduced-motion:reduce){.watcher{display:none}}
+  .cfg-add{display:flex;gap:8px;margin:8px 0 4px}
+  .cfg-add input{flex:1;font-size:13px;padding:7px 10px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface-2);color:var(--ink)}
+  .cfg-add button{font-family:var(--mono);font-size:12px;padding:7px 13px;border:none;border-radius:8px;background:var(--sig);color:#fff;cursor:pointer;font-weight:600}
+  .ed-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13.5px;padding:5px 0;border-bottom:1px solid var(--line)}
+  .ed-x,.ed-x2{background:none;border:none;color:var(--faint);cursor:pointer;font-size:12px;padding:0 3px;line-height:1}
+  .ed-x:hover,.ed-x2:hover{color:var(--crit)}
+  .cfg-sub{display:inline-flex;align-items:center;gap:3px}
+  .chat-log{max-height:190px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin:6px 0}
+  .ch-u{align-self:flex-end;background:var(--sig-soft);color:var(--ink);padding:6px 10px;border-radius:10px;font-size:13px;max-width:88%}
+  .ch-a{align-self:flex-start;background:var(--surface-2);color:var(--ink);padding:6px 10px;border-radius:10px;font-size:13px;max-width:88%}
+  .ch-wait{opacity:.6;font-style:italic}
+  .chat-suggest{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}
+  .sug{font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:999px;border:1px solid var(--sig);background:var(--sig-soft);color:var(--sig);cursor:pointer}
+  .sug em{opacity:.65;font-style:normal;margin-left:3px}
+  .sug:disabled{opacity:.55;cursor:default;border-color:var(--line);color:var(--muted);background:var(--surface-2)}
   .refresh{font-family:var(--mono);font-size:12px;padding:6px 11px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--muted);cursor:pointer}
-  .feed{display:flex;flex-direction:column;gap:13px;margin-top:16px}
+  .feed{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;align-items:stretch;margin:16px -26px 0}
+  .feed.one{grid-template-columns:1fr;margin-left:0;margin-right:0}
+  .col{display:flex;flex-direction:column;gap:12px;min-width:0;padding:0 26px}
+  .col + .col{border-left:1px solid var(--line-strong)}
+  .feed.one .col{padding:0;border-left:none}
+  .col .group-h{margin:0}
+  .colempty{font-family:var(--mono);font-size:12px;color:var(--faint);padding:12px;border:1px dashed var(--line);border-radius:8px;text-align:center}
   .group-h{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:16px 0 2px;display:flex;align-items:center;gap:8px}
   .group-h .dot{width:8px;height:8px;border-radius:50%}
-  .card{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--tc);border-radius:10px;padding:15px 17px;box-shadow:var(--shadow)}
+  .card{position:relative;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--tc);border-radius:10px;padding:15px 17px;box-shadow:var(--shadow)}
+  .card.hit{padding-right:72px}
+  .card-salute{position:absolute;top:12px;right:14px;width:54px;height:54px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
   .card.ai{--tc:var(--ai)}.card.content_gen{--tc:var(--gen)}.card.financial{--tc:var(--fin)}
   .row1{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:5px}
   .sr{font-family:var(--mono);font-size:12px;color:var(--tc);font-weight:600}
   .badge{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
   .badge.new{color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent);border-color:transparent;font-weight:700}
   .badge.brk{color:var(--crit);background:color-mix(in srgb,var(--crit) 13%,transparent);border-color:transparent;font-weight:700}
-  .badge.pref{color:var(--sig);background:var(--sig-soft);border-color:transparent}
+  .badge.pref{color:var(--sig);background:var(--sig-soft);border-color:transparent;display:inline-flex;align-items:center;gap:4px}
+  .salute{height:15px;width:auto;vertical-align:middle;border-radius:3px}
   .badge.norej{color:var(--faint)}
   .title{font-family:var(--serif);font-size:1.15rem;font-weight:600;margin:2px 0 5px;text-wrap:balance}
   .summary{font-size:14px;margin:0 0 9px}
@@ -69,17 +123,59 @@
   .foot a{color:var(--sig);text-decoration:none}.foot a:hover{text-decoration:underline}
   .foot .date{color:var(--faint);margin-left:auto}
   .empty{text-align:center;color:var(--faint);font-family:var(--mono);font-size:13px;padding:40px;border:1px dashed var(--line-strong);border-radius:10px}
+  @media (max-width:900px){.feed{grid-template-columns:1fr;margin-left:0;margin-right:0}.col{padding:0}.col + .col{border-left:none}}
   @media (max-width:680px){.stats{grid-template-columns:repeat(2,1fr)}.controls{position:static}}
+  /* the little guy doing laps around your dashboard */
+  .runner{position:fixed;top:0;left:0;z-index:9999;pointer-events:none;animation:lap 15s linear infinite}
+  .runner span{display:inline-block;font-size:32px;animation:bob .38s ease-in-out infinite;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-5px) rotate(8deg)}}
+  @keyframes lap{
+    0%{transform:translate(8px,8px) scaleX(-1)}
+    24%{transform:translate(calc(100vw - 50px),8px) scaleX(-1)}
+    26%{transform:translate(calc(100vw - 50px),8px) scaleX(-1)}
+    49%{transform:translate(calc(100vw - 50px),calc(100vh - 54px)) scaleX(-1)}
+    51%{transform:translate(calc(100vw - 50px),calc(100vh - 54px)) scaleX(1)}
+    74%{transform:translate(8px,calc(100vh - 54px)) scaleX(1)}
+    76%{transform:translate(8px,calc(100vh - 54px)) scaleX(1)}
+    99%{transform:translate(8px,8px) scaleX(1)}
+    100%{transform:translate(8px,8px) scaleX(-1)}
+  }
+  @media (prefers-reduced-motion:reduce){.runner{display:none}}
 </style>
 </head>
 <body>
+<div class="watcher" id="watcher"><img src="watching-you.png" alt="watching"><span>Watching, Always</span></div>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Local dashboard · reads the analyses DB</div>
-    <h1>Reddit Signal Agent</h1>
-    <p class="sub">Every post the agent has analysed, newest first. Sent items are 🆕 NEW in your Telegram.</p>
+    <div class="hrow">
+      <div class="lead">
+        <svg class="claw" viewBox="0 0 100 100" aria-hidden="true"><g stroke="currentColor" stroke-width="6" stroke-linecap="round"><line x1="50" y1="8" x2="50" y2="34"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(30 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(60 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(90 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(120 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(150 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(180 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(210 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(240 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(270 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(300 50 50)"/><line x1="50" y1="8" x2="50" y2="34" transform="rotate(330 50 50)"/></g></svg>
+        <div>
+          <div class="eyebrow">Local dashboard · reads the analyses DB</div>
+          <h1>Reddictator</h1>
+          <p class="sub">Every post the agent has analysed, newest first. Sent items are 🆕 NEW in your Telegram.</p>
+          <a href="about.html" style="display:inline-block;margin-top:4px;font-family:var(--mono);font-size:12px;color:var(--sig);text-decoration:none">Why Reddictator? →</a>
+        </div>
+      </div>
+      <figure class="regime">
+        <img src="https://icecric.news/wp-content/uploads/2026/07/Kylian-Mbappe-2.webp" alt="Reddit Dictator" referrerpolicy="no-referrer" onerror="this.closest('.regime').style.display='none'">
+        <figcaption>managed by The Dictator</figcaption>
+      </figure>
+    </div>
     <div class="stats" id="stats"></div>
   </header>
+  <details class="cfg"><summary>⚙ What Reddictator is watching · click to edit</summary><div id="cfgbody">
+    <div class="cfg-h first">Interests — an item is sent only if it matches one (or is breaking)</div>
+    <div id="cfg-interests"></div>
+    <div class="cfg-add"><input id="int-input" placeholder="Add an interest…" autocomplete="off"><button id="int-add">Add</button></div>
+    <div class="cfg-h">Subreddits watched</div>
+    <div id="cfg-subs"></div>
+    <div class="cfg-h">🤖 Suggest subreddits — tell the Dictator what you're into</div>
+    <div id="chat-log" class="chat-log"></div>
+    <div class="cfg-add"><input id="chat-input" placeholder="e.g. I'm into local video generation models" autocomplete="off"><button id="chat-send">Suggest</button></div>
+    <div id="chat-suggest" class="chat-suggest"></div>
+    <div class="cfg-params" id="cfg-params"></div>
+  </div></details>
   <div class="controls">
     <div class="chipgroup" id="trackchips">
       <button class="chip" data-t="all" aria-pressed="true">All</button>
@@ -115,7 +211,61 @@ async function load(){
     fetch("/api/stats").then(r=>r.json()),
   ]);
   ALL=sig; if(typeof st.relevance_threshold==="number")THRESH=st.relevance_threshold;
-  renderStats(st); render();
+  renderStats(st); renderConfig(st&&st.config); render();
+}
+let CFG={preferences:[],subreddits:{}}, CHAT=[];
+function renderConfig(cfg){
+  if(!cfg)return;
+  CFG={preferences:(cfg.preferences||[]).slice(), subreddits:JSON.parse(JSON.stringify(cfg.subreddits||{}))};
+  renderInterests(); renderSubs();
+  const p=[];
+  if(cfg.hot_limit!=null)p.push(`top ${cfg.hot_limit} hottest/sub`);
+  if(cfg.recency_hours!=null)p.push(`last ${cfg.recency_hours}h`);
+  if(cfg.relevance_threshold!=null)p.push(`confidence ≥ ${cfg.relevance_threshold}`);
+  const pe=document.getElementById("cfg-params"); if(pe)pe.textContent=p.join("  ·  ");
+}
+function renderInterests(){
+  const el=document.getElementById("cfg-interests"); if(!el)return;
+  el.innerHTML = CFG.preferences.length
+    ? CFG.preferences.map((p,i)=>`<div class="ed-row"><span>${esc(p)}</span><button class="ed-x" data-rmi="${i}" title="remove">✕</button></div>`).join("")
+    : `<p class="cfg-empty">none set — every relevant item is sent</p>`;
+}
+function renderSubs(){
+  const el=document.getElementById("cfg-subs"); if(!el)return;
+  let html="";
+  for(const tk of Object.keys(TRACKS)){
+    const list=CFG.subreddits[tk]||[];
+    html+=`<div class="cfg-track"><span class="cfg-tname" style="color:${TRACKS[tk].dot}">${esc(TRACKS[tk].label)}:</span>`+
+      (list.length?list.map((s,i)=>`<span class="cfg-sub">r/${esc(s)}<button class="ed-x2" data-rms="${tk}:${i}" title="remove">✕</button></span>`).join(""):`<span class="cfg-empty">—</span>`)+`</div>`;
+  }
+  el.innerHTML=html;
+}
+async function saveInterests(){
+  renderInterests();
+  const r=await fetch("/api/interests",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({preferences:CFG.preferences})});
+  renderConfig(await r.json());
+}
+async function saveSubs(){
+  renderSubs();
+  const r=await fetch("/api/subreddits",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({subreddits:CFG.subreddits})});
+  renderConfig(await r.json());
+}
+function addInterest(t){t=(t||"").trim();if(!t)return;CFG.preferences.push(t);saveInterests();}
+function addSub(tk,name){name=(name||"").trim().replace(/^r\//i,"");if(!name||!TRACKS[tk])return;CFG.subreddits[tk]=CFG.subreddits[tk]||[];if(!CFG.subreddits[tk].some(s=>s.toLowerCase()===name.toLowerCase()))CFG.subreddits[tk].push(name);saveSubs();}
+async function sendChat(msg){
+  msg=(msg||"").trim();
+  const log=document.getElementById("chat-log"), sug=document.getElementById("chat-suggest");
+  if(msg){CHAT.push({role:"user",content:msg});log.insertAdjacentHTML("beforeend",`<div class="ch-u">${esc(msg)}</div>`);}
+  log.insertAdjacentHTML("beforeend",`<div class="ch-a ch-wait">thinking…</div>`);log.scrollTop=log.scrollHeight;
+  try{
+    const r=await fetch("/api/suggest",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:msg,history:CHAT})});
+    const d=await r.json();
+    const w=log.querySelector(".ch-wait"); if(w)w.remove();
+    if(d.error){log.insertAdjacentHTML("beforeend",`<div class="ch-a">⚠ ${esc(d.error)}</div>`);return;}
+    CHAT.push({role:"assistant",content:d.reply||""});
+    log.insertAdjacentHTML("beforeend",`<div class="ch-a">${esc(d.reply||"")}</div>`);log.scrollTop=log.scrollHeight;
+    sug.innerHTML=(d.suggestions||[]).map(s=>`<button class="sug" data-add="${esc(s.track)}:${esc(s.name)}" title="${esc(s.reason||'')}">+ r/${esc(s.name)}<em>${esc(s.track)}</em></button>`).join("");
+  }catch(e){const w=log.querySelector(".ch-wait");if(w)w.remove();log.insertAdjacentHTML("beforeend",`<div class="ch-a">⚠ chatbot unavailable — is the local server + Ollama running?</div>`);}
 }
 
 function renderStats(s){
@@ -154,7 +304,7 @@ function card(it){
     it.sent?`<span class="badge new">🆕 new</span>`:`<span class="badge norej">${esc(hideReason(it))}</span>`,
     x.importance==="breaking"?`<span class="badge brk">breaking</span>`:"",
     !fin&&x.kind?`<span class="badge">${esc(x.kind)}</span>`:"",
-    it.matches_prefs?`<span class="badge pref">★ interest</span>`:"",
+    it.matches_prefs?`<span class="badge pref">interested</span>`:"",
   ].join("");
   let body;
   if(fin){
@@ -168,7 +318,7 @@ function card(it){
       <p class="recept"><span class="pill ${pill[0]}">${pill[1]}</span>${esc(x.reception_summary||"")}</p>`;
   }
   const src=it.source_url?`<a href="${esc(it.source_url)}" target="_blank" rel="noopener">source ↗</a>`:"";
-  return `<article class="card ${it.track}">
+  return `<article class="card ${it.track}${it.matches_prefs?" hit":""}">${it.matches_prefs?`<img class="card-salute" src="salute.png" alt="dictator approves">`:""}
     <div class="row1"><span class="sr">r/${esc(it.subreddit)}</span>${badges}</div>
     <div class="title">${esc(title)}</div>${body}
     <div class="foot">${src}<a href="${esc(it.permalink)}" target="_blank" rel="noopener">thread ↗</a><span class="date">${esc(it.analysed_at||"").slice(0,16).replace("T"," ")}</span></div>
@@ -178,17 +328,14 @@ function card(it){
 function render(){
   const shown=ALL.filter(matches);
   const feed=document.getElementById("feed");
-  if(!shown.length){feed.innerHTML=`<div class="empty">Nothing here yet. Run the agent to populate the database.</div>`;}
-  else{
-    let html="";
-    for(const tk of Object.keys(TRACKS)){
-      const items=shown.filter(x=>x.track===tk);
-      if(!items.length)continue;
-      html+=`<div class="group-h"><span class="dot" style="background:${TRACKS[tk].dot}"></span>${esc(TRACKS[tk].label)} · ${items.length}</div>`;
-      html+=items.map(card).join("");
-    }
-    feed.innerHTML=html;
+  const tracks=Object.keys(TRACKS).filter(tk=>state.track==="all"||state.track===tk);
+  let total=0,html="";
+  for(const tk of tracks){
+    const items=shown.filter(x=>x.track===tk);total+=items.length;
+    html+=`<div class="col"><div class="group-h"><span class="dot" style="background:${TRACKS[tk].dot}"></span>${esc(TRACKS[tk].label)} · ${items.length}</div>`+(items.length?items.map(card).join(""):`<div class="colempty">— none —</div>`)+`</div>`;
   }
+  if(!total){feed.className="feed one";feed.innerHTML=`<div class="empty">Nothing here yet. Run the agent to populate the database.</div>`;}
+  else{feed.className="feed"+(state.track==="all"?"":" one");feed.innerHTML=html;}
   document.getElementById("count").textContent=`${shown.length} shown`;
 }
 
@@ -205,6 +352,17 @@ document.getElementById("refresh").onclick=load;
 load();
 // Auto-refresh so the open dashboard stays in sync with each agent run.
 setInterval(load, 5*60*1000);  // every 5 min (runs write the DB every 3h)
+(function(){var w=document.getElementById("watcher");if(!w)return;function peek(){w.classList.toggle("left",Math.random()<0.5);w.classList.add("show");setTimeout(function(){w.classList.remove("show");},4500);}setTimeout(peek,5000);setInterval(peek,32000);})();
+(function(){
+  const on=(id,ev,fn)=>{const el=document.getElementById(id);if(el)el.addEventListener(ev,fn);};
+  on("cfg-interests","click",e=>{const b=e.target.closest("[data-rmi]");if(b){CFG.preferences.splice(+b.dataset.rmi,1);saveInterests();}});
+  on("cfg-subs","click",e=>{const b=e.target.closest("[data-rms]");if(b){const s=b.dataset.rms,i=s.lastIndexOf(":"),tk=s.slice(0,i);(CFG.subreddits[tk]||[]).splice(+s.slice(i+1),1);saveSubs();}});
+  on("chat-suggest","click",e=>{const b=e.target.closest("[data-add]");if(b){const s=b.dataset.add,i=s.indexOf(":");addSub(s.slice(0,i),s.slice(i+1));b.disabled=true;b.textContent="added ✓";}});
+  on("int-add","click",()=>{const i=document.getElementById("int-input");addInterest(i.value);i.value="";});
+  on("int-input","keydown",e=>{if(e.key==="Enter"){addInterest(e.target.value);e.target.value="";}});
+  on("chat-send","click",()=>{const i=document.getElementById("chat-input");sendChat(i.value);i.value="";});
+  on("chat-input","keydown",e=>{if(e.key==="Enter"){sendChat(e.target.value);e.target.value="";}});
+})();
 </script>
 </body>
 </html>
