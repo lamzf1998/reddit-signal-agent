@@ -49,7 +49,9 @@
   .colempty{font-family:var(--mono);font-size:12px;color:var(--faint);padding:12px;border:1px dashed var(--line);border-radius:8px;text-align:center}
   .group-h{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:16px 0 2px;display:flex;align-items:center;gap:8px}
   .group-h .dot{width:8px;height:8px;border-radius:50%}
-  .card{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--tc);border-radius:10px;padding:15px 17px;box-shadow:var(--shadow)}
+  .card{position:relative;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--tc);border-radius:10px;padding:15px 17px;box-shadow:var(--shadow)}
+  .card.hit{padding-right:72px}
+  .card-salute{position:absolute;top:12px;right:14px;width:54px;height:54px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
   .card.ai{--tc:var(--ai)}.card.content_gen{--tc:var(--gen)}.card.financial{--tc:var(--fin)}
   .row1{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:5px}
   .sr{font-family:var(--mono);font-size:12px;color:var(--tc);font-weight:600}
@@ -174,7 +176,7 @@ function card(it){
     it.sent?`<span class="badge new">🆕 new</span>`:`<span class="badge norej">${esc(hideReason(it))}</span>`,
     x.importance==="breaking"?`<span class="badge brk">breaking</span>`:"",
     !fin&&x.kind?`<span class="badge">${esc(x.kind)}</span>`:"",
-    it.matches_prefs?`<span class="badge pref"><img class="salute" src="salute.png" alt="">dictator is interested</span>`:"",
+    it.matches_prefs?`<span class="badge pref">interested</span>`:"",
   ].join("");
   let body;
   if(fin){
@@ -184,7 +186,7 @@ function card(it){
     body=`<p class="summary">${esc(x.one_liner||"")}</p><p class="recept"><span class="pill ${pill[0]}">${pill[1]}</span>${esc(x.reception_summary||"")}</p>`;
   }
   const src=it.source_url?`<a href="${esc(it.source_url)}" target="_blank" rel="noopener">source ↗</a>`:"";
-  return `<article class="card ${it.track}"><div class="row1"><span class="sr">r/${esc(it.subreddit)}</span>${badges}</div><div class="title">${esc(title)}</div>${body}<div class="foot">${src}<a href="${esc(it.permalink)}" target="_blank" rel="noopener">thread ↗</a><span class="date">${esc(it.analysed_at||"").slice(0,16).replace("T"," ")}</span></div></article>`;
+  return `<article class="card ${it.track}${it.matches_prefs?" hit":""}">${it.matches_prefs?`<img class="card-salute" src="salute.png" alt="dictator approves">`:""}<div class="row1"><span class="sr">r/${esc(it.subreddit)}</span>${badges}</div><div class="title">${esc(title)}</div>${body}<div class="foot">${src}<a href="${esc(it.permalink)}" target="_blank" rel="noopener">thread ↗</a><span class="date">${esc(it.analysed_at||"").slice(0,16).replace("T"," ")}</span></div></article>`;
 }
 function render(){
   const shown=ALL.filter(matches);
