@@ -53,6 +53,12 @@
   .cfg-sub{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
   .cfg-params{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
   .cfg-empty{font-size:13px;color:var(--faint);margin:0}
+  .watcher{position:fixed;right:18px;bottom:18px;z-index:9998;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:7px;transform:translateY(170%);transition:transform .6s cubic-bezier(.2,.9,.2,1)}
+  .watcher.left{right:auto;left:18px}
+  .watcher.show{transform:translateY(0)}
+  .watcher img{width:150px;height:auto;border-radius:10px;border:2px solid var(--sig);box-shadow:var(--shadow)}
+  .watcher span{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sig);background:var(--bg);padding:3px 9px;border-radius:6px;box-shadow:var(--shadow)}
+  @media (prefers-reduced-motion:reduce){.watcher{display:none}}
   .feed{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;align-items:stretch;margin:16px -26px 0}
   .feed.one{grid-template-columns:1fr;margin-left:0;margin-right:0}
   .col{display:flex;flex-direction:column;gap:12px;min-width:0;padding:0 26px}
@@ -107,6 +113,7 @@
 </head>
 <body>
 <div class="runner"><span>🏃</span></div>
+<div class="watcher" id="watcher"><img src="watching-you.png" alt="watching"><span>Watching, Always</span></div>
 <div class="wrap">
   <header>
     <div class="hrow">
@@ -239,6 +246,7 @@ document.querySelectorAll("#viewtabs .chip").forEach(b=>b.onclick=()=>{document.
 document.getElementById("search").oninput=e=>{state.q=e.target.value;render();};
 load();
 setInterval(load,5*60*1000);
+(function(){var w=document.getElementById("watcher");if(!w)return;function peek(){w.classList.toggle("left",Math.random()<0.5);w.classList.add("show");setTimeout(function(){w.classList.remove("show");},4500);}setTimeout(peek,5000);setInterval(peek,32000);})();
 </script>
 </body>
 </html>
